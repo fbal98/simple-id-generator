@@ -250,80 +250,89 @@ generateButton.addEventListener('click', async () => {
     generateButton.textContent = 'Generating...';
     generatedIdObjects = []; // Clear previous results
 
+    const idPromises = [];
+
     for (let i = 0; i < numIDs; i++) {
-        const idInstanceData = { text: {}, photos: {} }; // Stores data per field.id for the current ID card
+        idPromises.push((async () => {
+            const idInstanceData = { text: {}, photos: {} };
+            const photoPromises = [];
 
-        // Generate data for each field instance
-        for (const fieldIdKey in fields) { // Use fieldIdKey to avoid conflict
-            const field = fields[fieldIdKey];
-            switch (field.type) {
-                case 'name':
-                    idInstanceData.text[field.id] = dataGenerator.getRandomName();
-                    break;
-                case 'dob':
-                    idInstanceData.text[field.id] = dataGenerator.getRandomDate(1970, 2004);
-                    break;
-                case 'issueDate':
-                    idInstanceData.text[field.id] = dataGenerator.getRandomDate(2020, 2023);
-                    break;
-                case 'expiryDate':
-                    idInstanceData.text[field.id] = dataGenerator.getRandomDate(2024, 2030);
-                    break;
-                case 'civilNo':
-                    idInstanceData.text[field.id] = dataGenerator.getRandomCivilNumber();
-                    break;
-                case 'photo':
-                    try {
-                        // Fetch a unique face for each photo field instance
-                        idInstanceData.photos[field.id] = await fetchAIFace();
-                    } catch (e) {
-                        console.error(`Failed to fetch AI face for field ${field.id} on ID ${i + 1}: ${e.message}`);
-                        idInstanceData.photos[field.id] = null; // Store null if fetch fails
-                    }
-                    break;
-            }
-        }
-        
-        const offscreenCanvas = document.createElement('canvas');
-        offscreenCanvas.width = templateImage.width;
-        offscreenCanvas.height = templateImage.height;
-        const offscreenCtx = offscreenCanvas.getContext('2d');
-
-        // Calculate scale factors between displayed canvas and actual image size
-        const scaleX = templateImage.width / idCanvas.clientWidth;
-        const scaleY = templateImage.height / idCanvas.clientHeight;
-
-        // Pass data keyed by field.id to the rendering function with scaling
-        renderSingleIdToContext(
-            offscreenCtx,
-            templateImage,
-            fields,
-            idInstanceData.text,
-            idInstanceData.photos,
-            scaleX,
-            scaleY
-        );
-        
-        try {
-            const dataUrl = offscreenCanvas.toDataURL('image/png');
-            generatedIdObjects.push({ name: `id_${i + 1}.png`, dataUrl: dataUrl });
-
-            if (i === 0) { // Preview the first generated ID on the main canvas
-                const previewImage = new Image();
-                previewImage.onload = () => {
-                    ctx.clearRect(0,0, idCanvas.width, idCanvas.height);
-                    ctx.drawImage(previewImage, 0,0);
+            // Generate data for each field instance
+            for (const fieldIdKey in fields) {
+                const field = fields[fieldIdKey];
+                switch (field.type) {
+                    case 'name':
+                        idInstanceData.text[field.id] = dataGenerator.getRandomName();
+                        break;
+                    case 'dob':
+                        idInstanceData.text[field.id] = dataGenerator.getRandomDate(1970, 2004);
+                        break;
+                    case 'issueDate':
+                        idInstanceData.text[field.id] = dataGenerator.getRandomDate(2020, 2023);
+                        break;
+                    case 'expiryDate':
+                        idInstanceData.text[field.id] = dataGenerator.getRandomDate(2024, 2030);
+                        break;
+                    case 'civilNo':
+                        idInstanceData.text[field.id] = dataGenerator.getRandomCivilNumber();
+                        break;
+                    case 'photo':
+                        photoPromises.push(
+                            fetchAIFace()
+                                .then(img => {
+                                    idInstanceData.photos[field.id] = img;
+                                })
+                                .catch(e => {
+                                    console.error(`Failed to fetch AI face for field ${field.id} on ID ${i + 1}: ${e.message}`);
+                                    idInstanceData.photos[field.id] = null;
+                                })
+                        );
+                        break;
                 }
-                previewImage.src = dataUrl;
             }
-        } catch (e) {
-            console.error("Error generating data URL (possibly due to tainted canvas from CORS):", e);
-            alert("Error generating image. This might be due to CORS policy on the AI face image source. Check console for details.");
-            // If one fails, likely all will. Stop generation.
-            generatedIdObjects = []; // Clear partial results
-            break;
-        }
+
+            await Promise.all(photoPromises);
+
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = templateImage.width;
+            offscreenCanvas.height = templateImage.height;
+            const offscreenCtx = offscreenCanvas.getContext('2d');
+
+            // Calculate scale factors between displayed canvas and actual image size
+            const scaleX = templateImage.width / idCanvas.clientWidth;
+            const scaleY = templateImage.height / idCanvas.clientHeight;
+
+            renderSingleIdToContext(
+                offscreenCtx,
+                templateImage,
+                fields,
+                idInstanceData.text,
+                idInstanceData.photos,
+                scaleX,
+                scaleY
+            );
+
+            try {
+                const dataUrl = offscreenCanvas.toDataURL('image/png');
+                generatedIdObjects[i] = { name: `id_${i + 1}.png`, dataUrl: dataUrl };
+
+                if (i === 0) {
+                    const previewImage = new Image();
+                    previewImage.onload = () => {
+                        ctx.clearRect(0, 0, idCanvas.width, idCanvas.height);
+                        ctx.drawImage(previewImage, 0, 0);
+                    };
+                    previewImage.src = dataUrl;
+                }
+            } catch (e) {
+                console.error('Error generating data URL (possibly due to tainted canvas from CORS):', e);
+                alert('Error generating image. This might be due to CORS policy on the AI face image source. Check console for details.');
+                generatedIdObjects = [];
+            }
+        })());
     }
+
+    await Promise.all(idPromises);
 
     generateButton.disabled = false;
     generateButton.textContent = 'Generate IDs';
