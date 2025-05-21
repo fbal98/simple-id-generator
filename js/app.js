@@ -1,2 +1,5 @@
 // Main application entry point
-console.log("App loaded");
+// Import download functionality for single IDs
+import './downloadSingle.js';
+
+console.log('App loaded');
