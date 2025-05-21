@@ -1,0 +1,14 @@
+{
+  "name": "simple-id-generator",
+  "version": "1.0.0",
+  "description": "A simple ID generator tool",
+  "main": "index.html",
+  "scripts": {
+    "serve": "npx http-server -o"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
