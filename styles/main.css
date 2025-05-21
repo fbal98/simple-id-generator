@@ -10,10 +10,24 @@ body {
 #leftPanel {
     flex: 1;
     border-right: 1px solid #ddd;
+    padding: 10px;
 }
 
 #canvasWrapper {
     flex: 3;
+    position: relative;
+    border: 1px solid #ddd;
+}
+
+.field {
+    cursor: pointer;
+    padding: 4px 8px;
+    border: 1px dashed transparent;
+    user-select: none;
+}
+
+.field.selected {
+    border-color: #00f;
 }
 
 #rightPanel {
