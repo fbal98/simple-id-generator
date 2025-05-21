@@ -1,2 +1,7 @@
-// Main application entry point
-console.log("App loaded");
+import CanvasEngine from './canvasEngine.js';
+import PreviewNavigator from './previewNavigator.js';
+
+const engine = new CanvasEngine();
+new PreviewNavigator(engine);
+
+console.log('App loaded');
