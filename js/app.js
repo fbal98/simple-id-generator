@@ -94,37 +94,64 @@ function redrawCanvasWithTemplate() {
 }
 
 async function fetchAIFace() {
-    // IMPORTANT: This direct fetch might fail due to CORS issues if thispersondoesnotexist.com
-    // does not send appropriate Access-Control-Allow-Origin headers.
-    // If it fails, the canvas will be "tainted" when drawing this image,
-    // and toDataURL() will throw a security error.
-    // A CORS proxy might be needed for robust fetching.
     try {
-        // Adding a timestamp to the URL query string to try and prevent caching and get a new image.
-        const response = await fetch(`https://thispersondoesnotexist.com/?_=${new Date().getTime()}`, { cache: 'no-store' });
+        let imageData;
+        
+        // Use our local Bun server as a proxy
+        console.log('Using local Bun server as proxy for AI face');
+        
+        // Local server endpoint that handles CORS and proxies the request
+        const localProxyUrl = 'http://localhost:3000/api/face';
+        
+        // The server at /api/face is configured to not cache,
+        // so client-side cache busting (query params or cache option) is not strictly necessary here.
+        console.log('Fetching from:', localProxyUrl);
+        
+        const response = await fetch(localProxyUrl);
+        
         if (!response.ok) {
-            throw new Error(`Failed to fetch AI face: ${response.statusText}`);
+            let errorText = response.statusText;
+            try {
+                // Attempt to get more detailed error from proxy response body
+                const bodyText = await response.text();
+                if (bodyText) errorText += ` - ${bodyText}`;
+            } catch (e) {
+                // Ignore if can't read body
+            }
+            console.error(`Failed to fetch AI face via proxy: ${response.status} ${errorText}`);
+            throw new Error(`Failed to fetch AI face via proxy: ${response.status} ${errorText}`);
         }
+        
         const blob = await response.blob();
+        imageData = await new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = () => {
+                console.error('FileReader error while reading AI face blob.');
+                reject(new Error('FileReader error reading AI face blob.'));
+            };
+            reader.readAsDataURL(blob);
+        });
+
+        if (!imageData) { // Should not happen if previous steps succeeded, but as a safeguard.
+            console.error('AI face imageData is null after successful fetch and read.');
+            return null;
+        }
+
         return new Promise((resolve, reject) => {
             const img = new Image();
-            img.onload = () => {
-                URL.revokeObjectURL(img.src); // Clean up blob URL
-                resolve(img);
-            };
+            img.onload = () => resolve(img);
             img.onerror = (err) => {
-                URL.revokeObjectURL(img.src);
-                console.error("Error loading AI Face into Image object:", err);
-                reject(new Error('Failed to load AI face image data. Check CORS policy of the source.'));
+                console.error("Error loading AI Face data URL into Image object:", err);
+                reject(new Error('Failed to load AI face image data into Image object.'));
             };
-            // Using crossOrigin="Anonymous" is crucial for drawing cross-origin images to canvas
-            // if the server sends `Access-Control-Allow-Origin: *`.
-            img.crossOrigin = "Anonymous";
-            img.src = URL.createObjectURL(blob);
+            img.src = imageData;
         });
+
     } catch (error) {
-        console.error('Error fetching AI face:', error);
-        return null; // Return null if fetching fails
+        console.error('Error in fetchAIFace:', error.message);
+        // Don't alert - handle gracefully by returning null
+        return null; 
     }
 }
 

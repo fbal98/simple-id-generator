@@ -10,18 +10,18 @@
 <body>
     <div id="leftPanel">
         <h3>Controls</h3>
-        <div>
+        <div class="form-group">
             <label for="templateUpload">Upload ID Template:</label>
             <input type="file" id="templateUpload" accept="image/*">
         </div>
         <hr>
         <h4>Add Fields:</h4>
-        <div><button id="addNameField">Add Name</button></div>
-        <div><button id="addDOBField">Add Date of Birth</button></div>
-        <div><button id="addIssueDateField">Add Issue Date</button></div>
-        <div><button id="addExpiryDateField">Add Expiry Date</button></div>
-        <div><button id="addCivilNoField">Add Civil Number</button></div>
-        <div><button id="addPhotoField">Add Photo Area</button></div>
+        <div class="form-group"><button id="addNameField">Add Name</button></div>
+        <div class="form-group"><button id="addDOBField">Add Date of Birth</button></div>
+        <div class="form-group"><button id="addIssueDateField">Add Issue Date</button></div>
+        <div class="form-group"><button id="addExpiryDateField">Add Expiry Date</button></div>
+        <div class="form-group"><button id="addCivilNoField">Add Civil Number</button></div>
+        <div class="form-group"><button id="addPhotoField">Add Photo Area</button></div>
     </div>
 
     <div id="canvasWrapper">
@@ -31,20 +31,20 @@
 
     <div id="rightPanel">
         <h3>Generation</h3>
-        <div>
+        <div class="form-group">
             <label for="numIDsToGenerate">Number of IDs:</label>
             <input type="number" id="numIDsToGenerate" value="1" min="1">
         </div>
-        <div>
-            <button id="generateButton">Generate IDs</button>
+        <div class="form-group">
+            <button id="generateButton" class="btn-primary">Generate IDs</button>
         </div>
         <hr>
         <h4>Preview & Download</h4>
-        <div>
-            <button id="downloadPreviewButton">Download Preview</button>
+        <div class="form-group">
+            <button id="downloadPreviewButton" class="btn-secondary">Download Preview</button>
         </div>
-        <div>
-            <button id="downloadAllButton" style="display: none;">Download All (ZIP)</button>
+        <div class="form-group">
+            <button id="downloadAllButton" class="btn-success" style="display: none;">Download All (ZIP)</button>
         </div>
     </div>
 

@@ -68,7 +68,11 @@ export function addField(type, placeholderText = 'Text Field') {
   
   // Initial position relative to fieldLayer (which is aligned with canvas)
   field.style.left = '10px';
-  field.style.top = `${(fieldCounter * 30) % parseInt(fieldLayer.style.height || canvasRect.height)}px`; // Stagger new fields
+  
+  // Use clientHeight for live dimension, fallback to a default if height is 0 to avoid NaN from modulo by zero.
+  const layerHeightForPositioning = fieldLayer.clientHeight;
+  const effectiveLayerHeight = layerHeightForPositioning > 0 ? layerHeightForPositioning : 300; // Default to 300px if actual height is 0
+  field.style.top = `${(fieldCounter * 30) % effectiveLayerHeight}px`; // Stagger new fields
 
   fieldLayer.appendChild(field);
   fields[id] = field;

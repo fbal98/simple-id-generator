@@ -1,133 +1,270 @@
-/* Main layout styles */
+/* styles/main.css */
+
+/* === Root Variables === */
+:root {
+    --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    --background-color: #f8f9fa; /* Lighter, cleaner gray */
+    --panel-background: #ffffff;
+    --canvas-area-background: #e9ecef; /* Slightly different for canvas wrapper */
+    --border-color: #dee2e6; /* Softer border */
+    --text-color-primary: #212529; /* Standard dark text */
+    --text-color-secondary: #6c757d; /* Muted text for labels, subheadings */
+    
+    --primary-color: #007bff;
+    --primary-color-hover: #0056b3;
+    --secondary-color: #6c757d;
+    --secondary-color-hover: #5a6268;
+    --success-color: #28a745;
+    --success-color-hover: #1e7e34;
+    --danger-color: #dc3545;
+    --info-color-bg: rgba(0, 123, 255, 0.1);
+    --info-color-border: var(--primary-color);
+    --info-color-text: var(--primary-color-hover);
+    --danger-color-bg: rgba(220, 53, 69, 0.1);
+    --danger-color-border: var(--danger-color);
+    --danger-color-text: var(--danger-color);
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    --border-radius: 0.25rem; /* 4px */
+    --input-padding-y: 0.5rem; /* 8px */
+    --input-padding-x: 0.75rem; /* 12px */
+    --button-padding-y: 0.5rem;
+    --button-padding-x: 1rem;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+/* === Global Styles === */
 body {
     display: flex;
     height: 100vh;
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
+    font-family: var(--font-family-sans);
+    background-color: var(--background-color);
+    color: var(--text-color-primary);
+    font-size: 14px;
+    line-height: 1.6;
 }
 
+/* === Panel Styles === */
 #leftPanel, #rightPanel {
-    flex: 1;
-    padding: 20px;
-    background-color: #fff;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    flex: 0 0 280px; /* Fixed width for side panels for better control */
+    padding: var(--spacing-lg);
+    background-color: var(--panel-background);
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md); /* Consistent spacing between child elements */
 }
 
 #leftPanel {
-    border-right: 1px solid #ddd;
+    border-right: 1px solid var(--border-color);
 }
 
 #rightPanel {
-    border-left: 1px solid #ddd;
+    border-left: 1px solid var(--border-color);
 }
-
-#leftPanel h3, #leftPanel h4, #rightPanel h3, #rightPanel h4 {
-    margin-top: 0;
-    color: #333;
-}
-
-#leftPanel div, #rightPanel div {
-    margin-bottom: 15px;
-}
-
-#leftPanel label, #rightPanel label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-}
-
-#leftPanel input[type="file"],
-#leftPanel input[type="text"],
-#rightPanel input[type="number"] {
-    width: calc(100% - 10px);
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-sizing: border-box;
-}
-
-#leftPanel button, #rightPanel button {
-    padding: 10px 15px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-    box-sizing: border-box;
-    margin-top: 5px;
-}
-
-#leftPanel button:hover, #rightPanel button:hover {
-    background-color: #0056b3;
-}
-
-#downloadAllButton {
-    background-color: #28a745; /* Green color for zip download */
-}
-#downloadAllButton:hover {
-    background-color: #1e7e34;
-}
-
 
 #canvasWrapper {
-    flex: 3;
-    position: relative; /* Crucial for fieldLayer positioning */
+    flex-grow: 1; /* Takes remaining space */
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    background-color: #e9e9e9;
+    padding: var(--spacing-lg);
+    background-color: var(--canvas-area-background);
 }
 
 #idCanvas {
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain; /* Ensures canvas content scales well if it's larger than container */
+    object-fit: contain;
+    background-color: var(--panel-background);
+    box-shadow: var(--shadow-md);
 }
 
-/* overlay container for draggable fields */
-#fieldLayer {
-    position: absolute;
-    top: 0; /* Relative to canvasWrapper */
-    left: 0; /* Relative to canvasWrapper */
-    width: 100%; /* Cover canvasWrapper */
-    height: 100%; /* Cover canvasWrapper */
-    pointer-events: none; /* Allows clicks to pass through to canvas unless on a field */
+/* === Typography === */
+h3, h4 {
+    margin-top: 0;
+    color: var(--text-color-primary);
+    font-weight: 600;
 }
 
-/* basic styles for fields */
-.field {
-    position: absolute; /* Positioned relative to fieldLayer's offset parent, which should be canvasWrapper */
-    background: rgba(0, 123, 255, 0.2); /* Light blue transparent background */
-    border: 1px dashed #007bff;
-    padding: 4px 8px;
-    cursor: move;
-    font-size: 10px;
-    color: #0056b3;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    pointer-events: all; /* Fields themselves should be interactive */
+h3 {
+    font-size: 1.2rem; /* ~19px */
+    padding-bottom: var(--spacing-sm);
+    margin-bottom: 0; /* Gap handles spacing */
+    border-bottom: 1px solid var(--border-color);
+}
+
+h4 {
+    font-size: 0.95rem; /* ~15px */
+    color: var(--text-color-secondary);
+    margin-bottom: calc(-1 * var(--spacing-sm)); /* Pulls next element closer */
+    font-weight: 500;
+}
+
+/* === Form Elements Wrapper === */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs); /* Space between label and input */
+}
+
+label {
+    display: block;
+    font-weight: 500;
+    color: var(--text-color-secondary);
+    font-size: 0.875rem; /* ~14px */
+}
+
+input[type="file"],
+input[type="text"],
+input[type="number"] {
+    width: 100%;
+    padding: var(--input-padding-y) var(--input-padding-x);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
     box-sizing: border-box;
-    user-select: none;
+    background-color: var(--panel-background);
+    color: var(--text-color-primary);
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.field[data-type="photo"] {
-    background: rgba(255, 0, 0, 0.2); /* Light red for photo */
-    border: 1px dashed #ff0000;
-    color: #cc0000;
-    /* Ensure photo fields have a default size if needed */
-    min-width: 50px;
-    min-height: 50px;
+input[type="file"] {
+    padding-top: var(--spacing-sm); /* Adjust for file input specifics */
+    padding-bottom: var(--spacing-sm);
 }
+
+input[type="file"]::file-selector-button {
+    padding: var(--button-padding-y) var(--button-padding-x);
+    margin-right: var(--spacing-md);
+    background-color: var(--secondary-color); /* Use secondary for file upload button */
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 0.85rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: var(--secondary-color-hover);
+}
+
+input:focus,
+input[type="file"]:focus-within { /* For file input, focus on wrapper */
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* === Buttons === */
+button {
+    padding: var(--button-padding-y) var(--button-padding-x);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    font-weight: 500;
+    font-size: 0.9rem;
+    text-align: center;
+    transition: background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, transform 0.1s ease-in-out;
+    box-shadow: var(--shadow-sm);
+}
+
+button:hover {
+    box-shadow: var(--shadow-md);
+}
+
+button:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+button:disabled {
+    background-color: #ced4da;
+    color: #6c757d;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Button variants */
+button.btn-primary, #generateButton {
+    background-color: var(--primary-color);
+}
+button.btn-primary:hover, #generateButton:hover:not(:disabled) {
+    background-color: var(--primary-color-hover);
+}
+
+button.btn-secondary,
+#leftPanel button, /* Add field buttons */
+#downloadPreviewButton {
+    background-color: var(--secondary-color);
+}
+button.btn-secondary:hover,
+#leftPanel button:hover:not(:disabled),
+#downloadPreviewButton:hover:not(:disabled) {
+    background-color: var(--secondary-color-hover);
+}
+
+/* Ensure downloadAllButton (btn-success) also respects disabled state for hover */
+#downloadAllButton {
+    background-color: var(--success-color);
+}
+#downloadAllButton:hover:not(:disabled) {
+    background-color: var(--success-color-hover);
+}
+
+
+/* === Separator === */
 hr {
     border: 0;
     height: 1px;
-    background: #ddd;
-    margin: 20px 0;
+    background: var(--border-color);
+    /* margin handled by panel gap */
+}
+
+/* === Field Layer & Draggable Fields === */
+#fieldLayer {
+    position: absolute;
+    pointer-events: none;
+}
+
+.field {
+    position: absolute;
+    background: var(--info-color-bg);
+    border: 1px dashed var(--info-color-border);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: move;
+    font-size: 10px;
+    color: var(--info-color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: all;
+    box-sizing: border-box;
+    user-select: none;
+    border-radius: 2px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.07);
+}
+
+.field[data-type="photo"] {
+    background: var(--danger-color-bg);
+    border: 1px dashed var(--danger-color-border);
+    color: var(--danger-color-text);
+    min-width: 50px;
+    min-height: 50px;
 }
