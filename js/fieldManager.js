@@ -1,32 +1,55 @@
 // Manages draggable fields over the canvas
 const fieldLayer = document.createElement('div');
 fieldLayer.id = 'fieldLayer';
-// Styles for fieldLayer are now primarily in CSS for better separation.
-// It will be positioned relative to the canvas.
 
-let canvas = null; // Will be set by app.js
+let canvas = null;
 let canvasRect = null;
+let focusedField = null;
+const MIN_WIDTH = 20;
+const MIN_HEIGHT = 20;
 
 export function initializeFieldManager(canvasElement) {
   canvas = canvasElement;
-  const canvasWrapper = document.getElementById('canvasWrapper'); // Or pass canvasWrapper as well
+  const canvasWrapper = document.getElementById('canvasWrapper');
   if (canvasWrapper) {
     canvasWrapper.appendChild(fieldLayer);
-    // Adjust fieldLayer to be on top of the canvas, matching its position and size
-    // This might need dynamic adjustment if canvas resizes or moves.
-    // For now, assuming canvas position is static within canvasWrapper.
     updateFieldLayerPosition();
+    document.addEventListener('click', handleDocumentClick, true); // Use capture to ensure it runs
   } else {
     console.error('Canvas wrapper not found for field layer.');
   }
 }
 
+function handleDocumentClick(event) {
+    // If the click is outside any field and not on a field control, remove focus.
+    let target = event.target;
+    let isFieldOrChild = false;
+    while (target && target !== document.body) {
+        if (target.classList && (target.classList.contains('field') || target.classList.contains('resize-handle'))) {
+            isFieldOrChild = true;
+            break;
+        }
+        target = target.parentNode;
+    }
+
+    if (!isFieldOrChild && focusedField) {
+        setFocusedField(null);
+    }
+}
+
+
+function setFocusedField(fieldElement) {
+    if (focusedField && focusedField !== fieldElement) {
+        focusedField.classList.remove('focused');
+    }
+    if (fieldElement) {
+        fieldElement.classList.add('focused');
+    }
+    focusedField = fieldElement;
+}
+
 export function updateFieldLayerPosition() {
     if (!canvas || !fieldLayer.parentElement) return;
-    // Position fieldLayer directly over the canvas
-    // The canvas itself is centered in canvasWrapper by flexbox.
-    // fieldLayer is a child of canvasWrapper.
-    // We need to offset fieldLayer to align with the canvas.
     canvasRect = canvas.getBoundingClientRect();
     const wrapperRect = fieldLayer.parentElement.getBoundingClientRect();
 
@@ -35,8 +58,8 @@ export function updateFieldLayerPosition() {
     fieldLayer.style.top = `${canvasRect.top - wrapperRect.top}px`;
     fieldLayer.style.width = `${canvasRect.width}px`;
     fieldLayer.style.height = `${canvasRect.height}px`;
+    fieldLayer.style.pointerEvents = 'auto'; // Enable pointer events on fieldLayer for click-off
 }
-
 
 let fieldCounter = 0;
 const fields = {}; // Store field elements by id
@@ -47,7 +70,7 @@ export function addField(type, placeholderText = 'Text Field') {
     alert("Please upload a template image first.");
     return null;
   }
-  updateFieldLayerPosition(); // Ensure layer is correctly positioned before adding field
+  updateFieldLayerPosition();
 
   const field = document.createElement('div');
   const id = `field-${type}-${fieldCounter++}`;
@@ -55,100 +78,143 @@ export function addField(type, placeholderText = 'Text Field') {
   field.dataset.type = type;
   field.id = id;
   field.textContent = placeholderText;
+  
+  // Initial position
+  field.style.left = '10px';
+  const layerHeightForPositioning = fieldLayer.clientHeight > 0 ? fieldLayer.clientHeight : 300;
+  field.style.top = `${(Object.keys(fields).length * 25) % Math.max(25, layerHeightForPositioning - 25)}px`; // Stagger new fields
 
-  // Default size for photo field
+  fieldLayer.appendChild(field); // Add to DOM to measure
+
   if (type === 'photo') {
-    field.style.width = '100px'; // Default width for photo
-    field.style.height = '120px'; // Default height for photo
-    field.textContent = 'Photo Area'; // Override placeholder for photo
-  } else {
-    field.style.width = '150px'; // Default width for text fields
-    field.style.height = '20px';  // Default height for text fields
+    field.style.width = '100px';
+    field.style.height = '120px';
+    field.textContent = 'Photo Area';
+  } else { // Text field: auto-size
+    field.style.width = 'auto';
+    field.style.height = 'auto';
+    // Force reflow if needed, then get dimensions
+    // Adding to DOM above should be enough for offsetWidth/Height
+    let initialWidth = field.offsetWidth;
+    let initialHeight = field.offsetHeight;
+    field.style.width = `${Math.max(MIN_WIDTH, initialWidth)}px`;
+    field.style.height = `${Math.max(MIN_HEIGHT, initialHeight)}px`;
   }
   
-  // Initial position relative to fieldLayer (which is aligned with canvas)
-  field.style.left = '10px';
-  
-  // Use clientHeight for live dimension, fallback to a default if height is 0 to avoid NaN from modulo by zero.
-  const layerHeightForPositioning = fieldLayer.clientHeight;
-  const effectiveLayerHeight = layerHeightForPositioning > 0 ? layerHeightForPositioning : 300; // Default to 300px if actual height is 0
-  field.style.top = `${(fieldCounter * 30) % effectiveLayerHeight}px`; // Stagger new fields
-
-  fieldLayer.appendChild(field);
   fields[id] = field;
+  setFocusedField(field); // Focus new field
 
-  let startX = 0;
-  let startY = 0;
-  let startLeft = 0;
-  let startTop = 0;
+  // Drag handling
+  let dragStartX, dragStartY, dragStartLeft, dragStartTop;
+  field.addEventListener('pointerdown', e => {
+    if (e.target.classList.contains('resize-handle')) return; // Don't drag if resize handle is clicked
+    e.stopPropagation();
+    setFocusedField(field);
 
-  function onPointerMove(e) {
-    e.preventDefault(); // Prevent text selection during drag
-    let newLeft = startLeft + e.clientX - startX;
-    let newTop = startTop + e.clientY - startY;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragStartLeft = field.offsetLeft;
+    dragStartTop = field.offsetTop;
 
-    // Constrain dragging within the fieldLayer (canvas bounds)
-    const fieldRect = field.getBoundingClientRect(); // Current field rect
-    const layerRect = fieldLayer.getBoundingClientRect(); // fieldLayer rect
+    document.addEventListener('pointermove', onDragPointerMove);
+    document.addEventListener('pointerup', onDragPointerUp);
+  });
 
-    // Calculate relative positions based on parent's offset for style.left/top
-    const parentRect = fieldLayer.offsetParent.getBoundingClientRect();
+  function onDragPointerMove(e) {
+    e.preventDefault();
+    let newLeft = dragStartLeft + e.clientX - dragStartX;
+    let newTop = dragStartTop + e.clientY - dragStartY;
 
-    newLeft = Math.max(0, newLeft);
-    newTop = Math.max(0, newTop);
-    
-    // field.offsetWidth and field.offsetHeight can be used here
-    // but for simplicity, we'll use the style.width/height if available or estimate
-    const fieldWidth = parseInt(field.style.width);
-    const fieldHeight = parseInt(field.style.height);
-
-    if (newLeft + fieldWidth > parseInt(fieldLayer.style.width)) {
-        newLeft = parseInt(fieldLayer.style.width) - fieldWidth;
-    }
-    if (newTop + fieldHeight > parseInt(fieldLayer.style.height)) {
-        newTop = parseInt(fieldLayer.style.height) - fieldHeight;
-    }
+    // Constrain dragging within fieldLayer
+    newLeft = Math.max(0, Math.min(newLeft, fieldLayer.clientWidth - field.offsetWidth));
+    newTop = Math.max(0, Math.min(newTop, fieldLayer.clientHeight - field.offsetHeight));
     
     field.style.left = `${newLeft}px`;
     field.style.top = `${newTop}px`;
   }
 
-  function endDrag(e) {
-    document.removeEventListener('pointermove', onPointerMove);
-    document.removeEventListener('pointerup', endDrag);
-    
-    const finalLeft = field.offsetLeft;
-    const finalTop = field.offsetTop;
-    const finalWidth = parseInt(field.style.width);
-    const finalHeight = parseInt(field.style.height);
-
-    const event = new CustomEvent('field:moved', {
-      detail: {
-        id,
-        type: field.dataset.type,
-        x: finalLeft,
-        y: finalTop,
-        width: finalWidth,
-        height: finalHeight,
-        text: field.textContent // Or specific data for the field
-      }
-    });
-    // Dispatch from canvas or a common parent if needed elsewhere, or field itself
-    fieldLayer.dispatchEvent(event);
-    console.log('Field moved:', event.detail);
+  function onDragPointerUp() {
+    document.removeEventListener('pointermove', onDragPointerMove);
+    document.removeEventListener('pointerup', onDragPointerUp);
+    dispatchFieldUpdate(field);
   }
 
-  field.addEventListener('pointerdown', e => {
-    e.stopPropagation(); // Prevent triggering other listeners if any
-    startX = e.clientX;
-    startY = e.clientY;
-    startLeft = field.offsetLeft;
-    startTop = field.offsetTop;
-    document.addEventListener('pointermove', onPointerMove);
-    document.addEventListener('pointerup', endDrag);
+  // Resize handle
+  const resizeHandle = document.createElement('div');
+  resizeHandle.className = 'resize-handle';
+  field.appendChild(resizeHandle);
+
+  let resizeStartX, resizeStartY, resizeInitialWidth, resizeInitialHeight, resizeInitialFieldLeft, resizeInitialFieldTop;
+  resizeHandle.addEventListener('pointerdown', e => {
+    e.stopPropagation(); // Prevent field drag
+    setFocusedField(field);
+
+    resizeStartX = e.clientX;
+    resizeStartY = e.clientY;
+    resizeInitialWidth = field.offsetWidth;
+    resizeInitialHeight = field.offsetHeight;
+    resizeInitialFieldLeft = field.offsetLeft;
+    resizeInitialFieldTop = field.offsetTop;
+
+    document.addEventListener('pointermove', onResizePointerMove);
+    document.addEventListener('pointerup', onResizePointerUp);
   });
 
-  return { id, type, x: parseInt(field.style.left), y: parseInt(field.style.top), width: parseInt(field.style.width), height: parseInt(field.style.height), text: field.textContent };
+  function onResizePointerMove(e) {
+    e.preventDefault();
+    let newWidth = resizeInitialWidth + (e.clientX - resizeStartX);
+    let newHeight = resizeInitialHeight + (e.clientY - resizeStartY);
+
+    // Constrain size
+    newWidth = Math.max(MIN_WIDTH, newWidth);
+    newHeight = Math.max(MIN_HEIGHT, newHeight);
+
+    // Constrain within fieldLayer boundaries
+    newWidth = Math.min(newWidth, fieldLayer.clientWidth - resizeInitialFieldLeft);
+    newHeight = Math.min(newHeight, fieldLayer.clientHeight - resizeInitialFieldTop);
+    
+    field.style.width = `${newWidth}px`;
+    if (type === 'photo') {
+      field.style.height = `${newHeight}px`;
+    } else { // Text field: height adjusts to content after width change
+      field.style.height = 'auto';
+      // Force reflow to get new auto height
+      // Reading offsetHeight should trigger reflow if necessary
+      let autoHeight = field.offsetHeight;
+      field.style.height = `${Math.max(MIN_HEIGHT, autoHeight)}px`;
+    }
+  }
+
+  function onResizePointerUp() {
+    document.removeEventListener('pointermove', onResizePointerMove);
+    document.removeEventListener('pointerup', onResizePointerUp);
+    // For text fields, ensure height is correctly set after auto adjustment one last time
+    if (type !== 'photo') {
+        field.style.height = 'auto';
+        let finalAutoHeight = field.offsetHeight;
+        field.style.height = `${Math.max(MIN_HEIGHT, finalAutoHeight)}px`;
+    }
+    dispatchFieldUpdate(field);
+  }
+  
+  dispatchFieldUpdate(field); // Dispatch initial state
+  return { id, type, x: field.offsetLeft, y: field.offsetTop, width: field.offsetWidth, height: field.offsetHeight, text: field.textContent };
+}
+
+function dispatchFieldUpdate(fieldElement) {
+  const event = new CustomEvent('field:moved', { // Reusing 'field:moved' for simplicity
+    detail: {
+      id: fieldElement.id,
+      type: fieldElement.dataset.type,
+      x: fieldElement.offsetLeft,
+      y: fieldElement.offsetTop,
+      width: fieldElement.offsetWidth,
+      height: fieldElement.offsetHeight,
+      text: fieldElement.textContent
+    }
+  });
+  fieldLayer.dispatchEvent(event);
+  console.log('Field updated:', event.detail);
 }
 
 export function getFieldPositions() {
@@ -160,9 +226,9 @@ export function getFieldPositions() {
       type: field.dataset.type,
       x: field.offsetLeft,
       y: field.offsetTop,
-      width: parseInt(field.style.width),
-      height: parseInt(field.style.height),
-      text: field.textContent // Placeholder text or future actual text
+      width: field.offsetWidth,
+      height: field.offsetHeight,
+      text: field.textContent
     };
   }
   return positions;
@@ -176,6 +242,7 @@ export function clearFields() {
         delete fields[id];
     }
     fieldCounter = 0;
+    setFocusedField(null);
 }
 
 // Expose fieldLayer for app.js to potentially listen to events on it
