@@ -14,6 +14,25 @@ body {
 
 #canvasWrapper {
     flex: 3;
+    position: relative;
+}
+
+/* overlay container for draggable fields */
+#fieldLayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* basic styles for fields */
+.field {
+    position: absolute;
+    background: rgba(0, 0, 255, 0.1);
+    border: 1px solid #333;
+    padding: 4px 8px;
+    cursor: move;
 }
 
 #rightPanel {
