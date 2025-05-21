@@ -5,37 +5,129 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+}
+
+#leftPanel, #rightPanel {
+    flex: 1;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    overflow-y: auto;
 }
 
 #leftPanel {
-    flex: 1;
     border-right: 1px solid #ddd;
 }
 
+#rightPanel {
+    border-left: 1px solid #ddd;
+}
+
+#leftPanel h3, #leftPanel h4, #rightPanel h3, #rightPanel h4 {
+    margin-top: 0;
+    color: #333;
+}
+
+#leftPanel div, #rightPanel div {
+    margin-bottom: 15px;
+}
+
+#leftPanel label, #rightPanel label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+#leftPanel input[type="file"],
+#leftPanel input[type="text"],
+#rightPanel input[type="number"] {
+    width: calc(100% - 10px);
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+#leftPanel button, #rightPanel button {
+    padding: 10px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 5px;
+}
+
+#leftPanel button:hover, #rightPanel button:hover {
+    background-color: #0056b3;
+}
+
+#downloadAllButton {
+    background-color: #28a745; /* Green color for zip download */
+}
+#downloadAllButton:hover {
+    background-color: #1e7e34;
+}
+
+
 #canvasWrapper {
     flex: 3;
-    position: relative;
+    position: relative; /* Crucial for fieldLayer positioning */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background-color: #e9e9e9;
+}
+
+#idCanvas {
+    border: 1px solid #ccc;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Ensures canvas content scales well if it's larger than container */
 }
 
 /* overlay container for draggable fields */
 #fieldLayer {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; /* Relative to canvasWrapper */
+    left: 0; /* Relative to canvasWrapper */
+    width: 100%; /* Cover canvasWrapper */
+    height: 100%; /* Cover canvasWrapper */
+    pointer-events: none; /* Allows clicks to pass through to canvas unless on a field */
 }
 
 /* basic styles for fields */
 .field {
-    position: absolute;
-    background: rgba(0, 0, 255, 0.1);
-    border: 1px solid #333;
+    position: absolute; /* Positioned relative to fieldLayer's offset parent, which should be canvasWrapper */
+    background: rgba(0, 123, 255, 0.2); /* Light blue transparent background */
+    border: 1px dashed #007bff;
     padding: 4px 8px;
     cursor: move;
+    font-size: 10px;
+    color: #0056b3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: all; /* Fields themselves should be interactive */
+    box-sizing: border-box;
+    user-select: none;
 }
 
-#rightPanel {
-    flex: 1;
-    border-left: 1px solid #ddd;
+.field[data-type="photo"] {
+    background: rgba(255, 0, 0, 0.2); /* Light red for photo */
+    border: 1px dashed #ff0000;
+    color: #cc0000;
+    /* Ensure photo fields have a default size if needed */
+    min-width: 50px;
+    min-height: 50px;
+}
+hr {
+    border: 0;
+    height: 1px;
+    background: #ddd;
+    margin: 20px 0;
 }

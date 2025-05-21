@@ -5,11 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple ID Generator</title>
     <link rel="stylesheet" href="styles/main.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
-    <div id="leftPanel"></div>
-    <div id="canvasWrapper"></div>
-    <div id="rightPanel"></div>
+    <div id="leftPanel">
+        <h3>Controls</h3>
+        <div>
+            <label for="templateUpload">Upload ID Template:</label>
+            <input type="file" id="templateUpload" accept="image/*">
+        </div>
+        <hr>
+        <h4>Add Fields:</h4>
+        <div><button id="addNameField">Add Name</button></div>
+        <div><button id="addDOBField">Add Date of Birth</button></div>
+        <div><button id="addIssueDateField">Add Issue Date</button></div>
+        <div><button id="addExpiryDateField">Add Expiry Date</button></div>
+        <div><button id="addCivilNoField">Add Civil Number</button></div>
+        <div><button id="addPhotoField">Add Photo Area</button></div>
+    </div>
+
+    <div id="canvasWrapper">
+        <canvas id="idCanvas"></canvas>
+        <!-- fieldLayer will be appended here by fieldManager.js -->
+    </div>
+
+    <div id="rightPanel">
+        <h3>Generation</h3>
+        <div>
+            <label for="numIDsToGenerate">Number of IDs:</label>
+            <input type="number" id="numIDsToGenerate" value="1" min="1">
+        </div>
+        <div>
+            <button id="generateButton">Generate IDs</button>
+        </div>
+        <hr>
+        <h4>Preview & Download</h4>
+        <div>
+            <button id="downloadPreviewButton">Download Preview</button>
+        </div>
+        <div>
+            <button id="downloadAllButton" style="display: none;">Download All (ZIP)</button>
+        </div>
+    </div>
 
     <script type="module" src="js/app.js"></script>
 </body>
