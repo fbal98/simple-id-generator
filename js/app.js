@@ -128,7 +128,7 @@ async function fetchAIFace() {
     }
 }
 
-function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textDataById, photoDataById) {
+function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textDataById, photoDataById, scaleX = 1, scaleY = 1) {
     targetCtx.clearRect(0, 0, targetCtx.canvas.width, targetCtx.canvas.height);
     if (baseTemplate) {
         targetCtx.drawImage(baseTemplate, 0, 0, targetCtx.canvas.width, targetCtx.canvas.height);
@@ -147,10 +147,10 @@ function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textData
     for (const fieldKey in fieldLayouts) { // Use fieldKey to avoid conflict with global 'id' if any
         const field = fieldLayouts[fieldKey];
         console.log(`Rendering field: ID=${field.id}, Type=${field.type}, X=${field.x}, Y=${field.y}`);
-        const x = field.x;
-        const y = field.y;
-        const width = field.width;
-        const height = field.height;
+        const x = field.x * scaleX;
+        const y = field.y * scaleY;
+        const width = field.width * scaleX;
+        const height = field.height * scaleY;
 
         if (field.type === 'photo') {
             const photoImageObj = photoDataById[field.id];
@@ -262,8 +262,20 @@ generateButton.addEventListener('click', async () => {
         offscreenCanvas.height = templateImage.height;
         const offscreenCtx = offscreenCanvas.getContext('2d');
 
-        // Pass data keyed by field.id to the rendering function
-        renderSingleIdToContext(offscreenCtx, templateImage, fields, idInstanceData.text, idInstanceData.photos);
+        // Calculate scale factors between displayed canvas and actual image size
+        const scaleX = templateImage.width / idCanvas.clientWidth;
+        const scaleY = templateImage.height / idCanvas.clientHeight;
+
+        // Pass data keyed by field.id to the rendering function with scaling
+        renderSingleIdToContext(
+            offscreenCtx,
+            templateImage,
+            fields,
+            idInstanceData.text,
+            idInstanceData.photos,
+            scaleX,
+            scaleY
+        );
         
         try {
             const dataUrl = offscreenCanvas.toDataURL('image/png');
