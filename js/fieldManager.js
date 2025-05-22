@@ -272,6 +272,24 @@ export function clearFields() {
     setFocusedField(null);
 }
 
+export function hideAllFields() {
+    for (const id in fields) {
+        const field = fields[id];
+        if (field) {
+            field.style.display = 'none';
+        }
+    }
+}
+
+export function showAllFields() {
+    for (const id in fields) {
+        const field = fields[id];
+        if (field) {
+            field.style.display = '';
+        }
+    }
+}
+
 export function cleanupFieldManager() {
     window.removeEventListener('resize', updateFieldLayerPosition);
     document.removeEventListener('click', handleDocumentClick, true);

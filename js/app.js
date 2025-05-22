@@ -60,6 +60,7 @@ templateUpload.addEventListener('change', (event) => {
 });
 
 function addNewField(type, placeholderText) {
+    fieldManager.showAllFields();
     if (!templateImage) {
         alert('Please upload an ID template image first.');
         return;
@@ -377,6 +378,7 @@ generateButton.addEventListener('click', async () => {
                     previewImage.onload = () => {
                         ctx.clearRect(0, 0, idCanvas.width, idCanvas.height);
                         ctx.drawImage(previewImage, 0, 0);
+                        fieldManager.hideAllFields();
                     };
                     previewImage.src = dataUrl;
                 }
