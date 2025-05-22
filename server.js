@@ -12,7 +12,7 @@ const server = Bun.serve({
     const pathname = url.pathname;
 
     // Serve index.html for the root path
-    if (pathname === "/") {
+    if (pathname === "/" || pathname === "/index.html") {
       const filePath = path.join(import.meta.dir, "index.html");
       if (existsSync(filePath)) {
         const file = Bun.file(filePath);
