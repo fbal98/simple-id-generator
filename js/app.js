@@ -291,6 +291,7 @@ generateButton.addEventListener('click', async () => {
     }
 
     const numIDs = parseInt(numIDsToGenerateInput.value) || 1;
+    fieldManager.hideAllFields(); // Ensure any visible overlays are hidden before generating
     generateButton.disabled = true;
     generateButton.textContent = 'Generating...';
     generatedIdObjects = []; // Clear previous results
