@@ -46,6 +46,15 @@ function setFocusedField(fieldElement) {
         fieldElement.classList.add('focused');
     }
     focusedField = fieldElement;
+    const event = new CustomEvent('field:focused', {
+        detail: fieldElement
+            ? {
+                  id: fieldElement.id,
+                  type: fieldElement.dataset.type
+              }
+            : null
+    });
+    fieldLayer.dispatchEvent(event);
 }
 
 export function updateFieldLayerPosition() {
@@ -91,6 +100,9 @@ export function addField(type, placeholderText = 'Text Field') {
     field.style.height = '120px';
     field.textContent = 'Photo Area';
   } else { // Text field: auto-size
+    // Default font styles for text fields
+    field.style.fontFamily = 'Arial';
+    field.style.fontSize = '16px';
     field.style.width = 'auto';
     field.style.height = 'auto';
     // Force reflow if needed, then get dimensions
@@ -198,7 +210,17 @@ export function addField(type, placeholderText = 'Text Field') {
   }
   
   dispatchFieldUpdate(field); // Dispatch initial state
-  return { id, type, x: field.offsetLeft, y: field.offsetTop, width: field.offsetWidth, height: field.offsetHeight, text: field.textContent };
+  return {
+    id,
+    type,
+    x: field.offsetLeft,
+    y: field.offsetTop,
+    width: field.offsetWidth,
+    height: field.offsetHeight,
+    text: field.textContent,
+    fontFamily: field.style.fontFamily || 'Arial',
+    fontSize: parseInt(field.style.fontSize, 10) || 16
+  };
 }
 
 function dispatchFieldUpdate(fieldElement) {
@@ -210,7 +232,9 @@ function dispatchFieldUpdate(fieldElement) {
       y: fieldElement.offsetTop,
       width: fieldElement.offsetWidth,
       height: fieldElement.offsetHeight,
-      text: fieldElement.textContent
+      text: fieldElement.textContent,
+      fontFamily: fieldElement.style.fontFamily || 'Arial',
+      fontSize: parseInt(fieldElement.style.fontSize, 10) || 16
     }
   });
   fieldLayer.dispatchEvent(event);
@@ -228,7 +252,9 @@ export function getFieldPositions() {
       y: field.offsetTop,
       width: field.offsetWidth,
       height: field.offsetHeight,
-      text: field.textContent
+      text: field.textContent,
+      fontFamily: field.style.fontFamily || 'Arial',
+      fontSize: parseInt(field.style.fontSize, 10) || 16
     };
   }
   return positions;
