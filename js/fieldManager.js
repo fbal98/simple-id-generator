@@ -14,6 +14,7 @@ export function initializeFieldManager(canvasElement) {
   if (canvasWrapper) {
     canvasWrapper.appendChild(fieldLayer);
     updateFieldLayerPosition();
+    window.addEventListener('resize', updateFieldLayerPosition);
     document.addEventListener('click', handleDocumentClick, true); // Use capture to ensure it runs
   } else {
     console.error('Canvas wrapper not found for field layer.');
@@ -243,6 +244,11 @@ export function clearFields() {
     }
     fieldCounter = 0;
     setFocusedField(null);
+}
+
+export function cleanupFieldManager() {
+    window.removeEventListener('resize', updateFieldLayerPosition);
+    document.removeEventListener('click', handleDocumentClick, true);
 }
 
 // Expose fieldLayer for app.js to potentially listen to events on it
