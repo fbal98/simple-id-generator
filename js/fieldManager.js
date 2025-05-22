@@ -288,20 +288,34 @@ export function updateFieldOverlayText(fieldId, newText) {
 }
 
 export function hideAllFields() {
+    // Hide fields tracked in the fields map
     for (const id in fields) {
         const field = fields[id];
         if (field) {
             field.style.display = 'none';
         }
     }
+    // Also hide any orphaned overlays that might not be tracked
+    if (fieldLayer && fieldLayer.children) {
+        Array.from(fieldLayer.children).forEach(child => {
+            child.style.display = 'none';
+        });
+    }
 }
 
 export function showAllFields() {
+    // Show fields tracked in the fields map
     for (const id in fields) {
         const field = fields[id];
         if (field) {
             field.style.display = '';
         }
+    }
+    // Also show any orphaned overlays just in case
+    if (fieldLayer && fieldLayer.children) {
+        Array.from(fieldLayer.children).forEach(child => {
+            child.style.display = '';
+        });
     }
 }
 
