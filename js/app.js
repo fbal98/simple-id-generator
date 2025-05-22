@@ -16,6 +16,7 @@ const addPhotoFieldButton = document.getElementById('addPhotoField');
 const numIDsToGenerateInput = document.getElementById('numIDsToGenerate');
 const generateButton = document.getElementById('generateButton');
 const downloadPreviewButton = document.getElementById('downloadPreviewButton');
+const editLayoutButton = document.getElementById('editLayoutButton');
 const downloadAllButton = document.getElementById('downloadAllButton');
 const fontFamilySelect = document.getElementById('fontFamilySelect');
 const fontSizeInput = document.getElementById('fontSizeInput');
@@ -52,6 +53,7 @@ templateUpload.addEventListener('change', (event) => {
                 fields = {};
                 generatedIdObjects = [];
                 downloadAllButton.style.display = 'none';
+                editLayoutButton.style.display = 'none';
             };
             templateImage.src = e.target.result;
         };
@@ -398,6 +400,7 @@ generateButton.addEventListener('click', async () => {
 
     if (generatedIdObjects.length > 0) {
         downloadPreviewButton.disabled = false;
+        editLayoutButton.style.display = 'inline-block';
         if (generatedIdObjects.length > 1 && jszipAvailable) {
             downloadAllButton.style.display = 'inline-block'; // Or 'block' depending on layout
         } else {
@@ -405,6 +408,7 @@ generateButton.addEventListener('click', async () => {
         }
     } else {
         downloadPreviewButton.disabled = true;
+        editLayoutButton.style.display = 'none';
         downloadAllButton.style.display = 'none';
         redrawCanvasWithTemplate(); // Show blank template if generation failed
     }
@@ -422,6 +426,12 @@ downloadPreviewButton.addEventListener('click', () => {
     } else {
         alert('No ID generated yet to download. Please generate IDs first.');
     }
+});
+
+editLayoutButton.addEventListener('click', () => {
+    fieldManager.showAllFields();
+    redrawCanvasWithTemplate();
+    editLayoutButton.style.display = 'none';
 });
 
 downloadAllButton.addEventListener('click', () => {
@@ -461,6 +471,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     downloadPreviewButton.disabled = true;
     downloadAllButton.style.display = 'none';
+    editLayoutButton.style.display = 'none';
     fontFamilySelect.disabled = true;
     fontSizeInput.disabled = true;
 
