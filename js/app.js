@@ -260,8 +260,9 @@ function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textData
         } else {
             let textToDraw = textDataById[field.id] || `[${field.type}]`;
             console.log(`For field ID ${field.id} (type ${field.type}), drawing text: "${textToDraw}"`);
-            targetCtx.font = `${field.fontSize || 16}px ${field.fontFamily || 'Arial'}`;
-            const lineHeight = field.fontSize || 16;
+            const scaledFontSize = (field.fontSize || 16) * scaleY;
+            targetCtx.font = `${scaledFontSize}px ${field.fontFamily || 'Arial'}`;
+            const lineHeight = scaledFontSize;
             // Basic text wrapping
             const lines = [];
             let currentLine = '';
@@ -278,8 +279,10 @@ function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textData
             }
             lines.push(currentLine);
 
+            const paddingX = 2 * scaleX;
+            const paddingY = 2 * scaleY;
             lines.forEach((line, index) => {
-                 targetCtx.fillText(line.trim(), x + 2, y + 2 + (index * lineHeight));
+                 targetCtx.fillText(line.trim(), x + paddingX, y + paddingY + (index * lineHeight));
             });
         }
     }
