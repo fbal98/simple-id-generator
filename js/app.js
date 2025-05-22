@@ -17,6 +17,9 @@ const numIDsToGenerateInput = document.getElementById('numIDsToGenerate');
 const generateButton = document.getElementById('generateButton');
 const downloadPreviewButton = document.getElementById('downloadPreviewButton');
 const downloadAllButton = document.getElementById('downloadAllButton');
+const progressWrapper = document.getElementById('progressWrapper');
+const progressBar = document.getElementById('generationProgress');
+const progressText = document.getElementById('progressText');
 
 // App State
 let templateImage = null;
@@ -249,6 +252,12 @@ generateButton.addEventListener('click', async () => {
     generateButton.disabled = true;
     generateButton.textContent = 'Generating...';
     generatedIdObjects = []; // Clear previous results
+    if (progressWrapper) {
+        progressBar.max = numIDs;
+        progressBar.value = 0;
+        progressText.textContent = `0 / ${numIDs}`;
+        progressWrapper.style.display = 'block';
+    }
 
     const idPromises = [];
 
@@ -329,6 +338,11 @@ generateButton.addEventListener('click', async () => {
                 alert('Error generating image. This might be due to CORS policy on the AI face image source. Check console for details.');
                 generatedIdObjects = [];
             }
+
+            if (progressWrapper) {
+                progressBar.value += 1;
+                progressText.textContent = `${progressBar.value} / ${numIDs}`;
+            }
         })());
     }
 
@@ -336,6 +350,11 @@ generateButton.addEventListener('click', async () => {
 
     generateButton.disabled = false;
     generateButton.textContent = 'Generate IDs';
+    if (progressWrapper) {
+        progressWrapper.style.display = 'none';
+        progressBar.value = 0;
+        progressText.textContent = '';
+    }
 
     if (generatedIdObjects.length > 0) {
         downloadPreviewButton.disabled = false;
