@@ -225,7 +225,6 @@ function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textData
     console.log("Text data by ID:", JSON.parse(JSON.stringify(textDataById)));
     console.log("Photo data by ID keys:", Object.keys(photoDataById));
 
-
     for (const fieldKey in fieldLayouts) { // Use fieldKey to avoid conflict with global 'id' if any
         const field = fieldLayouts[fieldKey];
         console.log(`Rendering field: ID=${field.id}, Type=${field.type}, X=${field.x}, Y=${field.y}`);
@@ -541,13 +540,5 @@ window.addEventListener('DOMContentLoaded', () => {
         console.warn('JSZip failed to load. Download All feature disabled.');
     }
 });
-
-// For easier debugging
-window.appState = {
-    getFields: () => fields,
-    getTemplate: () => templateImage,
-    getGeneratedIds: () => generatedIdObjects,
-    redraw: redrawCanvasWithTemplate,
-};
 
 console.log('App loaded.', jszipAvailable ? 'JSZip detected.' : 'JSZip NOT detected.');
