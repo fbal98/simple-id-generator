@@ -18,6 +18,9 @@ const generateButton = document.getElementById('generateButton');
 const downloadPreviewButton = document.getElementById('downloadPreviewButton');
 const downloadAllButton = document.getElementById('downloadAllButton');
 
+// Check if JSZip loaded from CDN
+const jszipAvailable = typeof window.JSZip !== 'undefined';
+
 // App State
 let templateImage = null;
 let fields = {}; // Stores configuration of added fields: { id: {type, x, y, width, height, text} }
@@ -339,7 +342,7 @@ generateButton.addEventListener('click', async () => {
 
     if (generatedIdObjects.length > 0) {
         downloadPreviewButton.disabled = false;
-        if (generatedIdObjects.length > 1) {
+        if (generatedIdObjects.length > 1 && jszipAvailable) {
             downloadAllButton.style.display = 'inline-block'; // Or 'block' depending on layout
         } else {
             downloadAllButton.style.display = 'none';
@@ -367,6 +370,10 @@ downloadPreviewButton.addEventListener('click', () => {
 
 downloadAllButton.addEventListener('click', () => {
     if (generatedIdObjects.length > 1) {
+        if (typeof window.JSZip === 'undefined') {
+            alert('JSZip library failed to load. Unable to generate ZIP file.');
+            return;
+        }
         const zip = new JSZip();
         generatedIdObjects.forEach(idObj => {
             // JSZip needs the base64 part of the data URL
@@ -398,6 +405,10 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     downloadPreviewButton.disabled = true;
     downloadAllButton.style.display = 'none';
+    if (!jszipAvailable) {
+        downloadAllButton.disabled = true;
+        console.warn('JSZip failed to load. Download All feature disabled.');
+    }
 });
 
 // For easier debugging
@@ -408,4 +419,4 @@ window.appState = {
     redraw: redrawCanvasWithTemplate,
 };
 
-console.log('App loaded. JSZip should be available.');
+console.log('App loaded.', jszipAvailable ? 'JSZip detected.' : 'JSZip NOT detected.');
