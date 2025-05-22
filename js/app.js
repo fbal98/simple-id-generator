@@ -263,28 +263,13 @@ function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textData
             console.log(`For field ID ${field.id} (type ${field.type}), drawing text: "${textToDraw}"`);
             const scaledFontSize = (field.fontSize || 16) * scaleY;
             targetCtx.font = `${scaledFontSize}px ${field.fontFamily || 'Arial'}`;
-            const lineHeight = scaledFontSize;
-            // Basic text wrapping
-            const lines = [];
-            let currentLine = '';
-            const words = String(textToDraw).split(' '); // Ensure textToDraw is a string
-            for(const word of words) {
-                const testLine = currentLine + word + ' ';
-                const metrics = targetCtx.measureText(testLine);
-                if (metrics.width > width && currentLine !== '') {
-                    lines.push(currentLine);
-                    currentLine = word + ' ';
-                } else {
-                    currentLine = testLine;
-                }
-            }
-            lines.push(currentLine);
+            // const lineHeight = scaledFontSize; // Not strictly needed for single line in this manner
 
-            const paddingX = 2 * scaleX;
-            const paddingY = 2 * scaleY;
-            lines.forEach((line, index) => {
-                 targetCtx.fillText(line.trim(), x + paddingX, y + paddingY + (index * lineHeight));
-            });
+            const paddingX = 2 * scaleX; // Small horizontal padding from left edge
+            const paddingY = 2 * scaleY; // Small vertical padding from top edge
+            
+            // Draw text as a single line, no wrapping
+            targetCtx.fillText(String(textToDraw).trim(), x + paddingX, y + paddingY);
         }
     }
 }
