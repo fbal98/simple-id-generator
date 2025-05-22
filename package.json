@@ -4,8 +4,23 @@
   "description": "A simple ID generator tool",
   "main": "index.html",
   "scripts": {
-    "start": "bun server.js"
+    "start": "bun server.js",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox", 
+    "test:webkit": "playwright test --project=webkit",
+    "test:report": "playwright show-report",
+    "test:install": "playwright install",
+    "test:fast": "playwright test --project=chromium --workers=4 --reporter=dot",
+    "test:core": "playwright test tests/template-upload.spec.js tests/id-generation.spec.js --project=chromium --reporter=dot",
+    "test:smoke": "playwright test tests/template-upload.spec.js --project=chromium --reporter=dot"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  }
 }

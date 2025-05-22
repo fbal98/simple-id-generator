@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__brave__brave_web_search",
+      "Bash(bun install:*)",
+      "Bash(bunx playwright:*)",
+      "Bash(mkdir:*)",
+      "Bash(bun tests/fixtures/create-test-images.js:*)",
+      "Bash(bun tests/fixtures/create-realistic-template.js:*)",
+      "Bash(bun test:*)",
+      "Bash(bun run test:smoke:*)"
+    ],
+    "deny": []
+  }
+}

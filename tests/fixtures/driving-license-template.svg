@@ -1,0 +1,47 @@
+
+    <svg width="600" height="380" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background -->
+      <rect width="600" height="380" fill="#f1f3f4"/>
+      
+      <!-- Main border -->
+      <rect x="5" y="5" width="590" height="370" fill="none" stroke="#1a365d" stroke-width="2" rx="12"/>
+      
+      <!-- Header section -->
+      <rect x="15" y="15" width="570" height="50" fill="#2d3748" rx="5"/>
+      <text x="300" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="white" font-weight="bold">DRIVING LICENCE</text>
+      <text x="300" y="52" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="white">SULTANATE OF OMAN</text>
+      
+      <!-- Photo area -->
+      <rect x="30" y="85" width="100" height="130" fill="#e2e8f0" stroke="#4a5568" stroke-width="1" rx="3"/>
+      <text x="80" y="125" text-anchor="middle" font-family="Arial" font-size="9" fill="#4a5568">PHOTO</text>
+      <text x="80" y="140" text-anchor="middle" font-family="Arial" font-size="9" fill="#4a5568">AREA</text>
+      
+      <!-- Field areas -->
+      <!-- Name -->
+      <text x="150" y="105" font-family="Arial" font-size="11" fill="#2d3748" font-weight="bold">NAME</text>
+      <rect x="150" y="110" width="420" height="22" fill="white" stroke="#cbd5e0" stroke-width="1" rx="2"/>
+      
+      <!-- License Number -->
+      <text x="150" y="150" font-family="Arial" font-size="11" fill="#2d3748" font-weight="bold">LICENSE NUMBER</text>
+      <rect x="150" y="155" width="200" height="22" fill="white" stroke="#cbd5e0" stroke-width="1" rx="2"/>
+      
+      <!-- Class -->
+      <text x="370" y="150" font-family="Arial" font-size="11" fill="#2d3748" font-weight="bold">CLASS</text>
+      <rect x="370" y="155" width="100" height="22" fill="white" stroke="#cbd5e0" stroke-width="1" rx="2"/>
+      
+      <!-- Date of Birth -->
+      <text x="150" y="195" font-family="Arial" font-size="11" fill="#2d3748" font-weight="bold">DATE OF BIRTH</text>
+      <rect x="150" y="200" width="130" height="22" fill="white" stroke="#cbd5e0" stroke-width="1" rx="2"/>
+      
+      <!-- Issue Date -->
+      <text x="300" y="195" font-family="Arial" font-size="11" fill="#2d3748" font-weight="bold">ISSUE DATE</text>
+      <rect x="300" y="200" width="120" height="22" fill="white" stroke="#cbd5e0" stroke-width="1" rx="2"/>
+      
+      <!-- Expiry Date -->
+      <text x="440" y="195" font-family="Arial" font-size="11" fill="#2d3748" font-weight="bold">EXPIRY DATE</text>
+      <rect x="440" y="200" width="120" height="22" fill="white" stroke="#cbd5e0" stroke-width="1" rx="2"/>
+      
+      <!-- Footer -->
+      <text x="300" y="350" text-anchor="middle" font-family="Arial" font-size="10" fill="#718096">TEST DRIVING LICENSE TEMPLATE - NOT FOR OFFICIAL USE</text>
+    </svg>
+  

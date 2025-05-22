@@ -1,0 +1,47 @@
+
+    <svg width="600" height="380" xmlns="http://www.w3.org/2000/svg">
+      <!-- Background with subtle pattern -->
+      <rect width="600" height="380" fill="#f8f9fa"/>
+      
+      <!-- Main border -->
+      <rect x="5" y="5" width="590" height="370" fill="none" stroke="#2c3e50" stroke-width="2" rx="15"/>
+      
+      <!-- Header section -->
+      <rect x="15" y="15" width="570" height="60" fill="#34495e" rx="5"/>
+      <text x="300" y="35" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="white" font-weight="bold">SULTANATE OF OMAN</text>
+      <text x="300" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" fill="white" font-weight="bold">IDENTITY CARD</text>
+      
+      <!-- Photo area -->
+      <rect x="30" y="100" width="120" height="150" fill="#e9ecef" stroke="#6c757d" stroke-width="1" rx="3"/>
+      <text x="90" y="150" text-anchor="middle" font-family="Arial" font-size="10" fill="#6c757d">PHOTO</text>
+      <text x="90" y="165" text-anchor="middle" font-family="Arial" font-size="10" fill="#6c757d">AREA</text>
+      
+      <!-- Field labels and areas -->
+      <!-- Name field -->
+      <text x="170" y="120" font-family="Arial" font-size="12" fill="#495057" font-weight="bold">NAME</text>
+      <rect x="170" y="125" width="400" height="25" fill="white" stroke="#ced4da" stroke-width="1" rx="2"/>
+      
+      <!-- Civil Number field -->
+      <text x="170" y="170" font-family="Arial" font-size="12" fill="#495057" font-weight="bold">CIVIL NUMBER</text>
+      <rect x="170" y="175" width="200" height="25" fill="white" stroke="#ced4da" stroke-width="1" rx="2"/>
+      
+      <!-- Date of Birth field -->
+      <text x="170" y="220" font-family="Arial" font-size="12" fill="#495057" font-weight="bold">DATE OF BIRTH</text>
+      <rect x="170" y="225" width="150" height="25" fill="white" stroke="#ced4da" stroke-width="1" rx="2"/>
+      
+      <!-- Issue Date field -->
+      <text x="340" y="220" font-family="Arial" font-size="12" fill="#495057" font-weight="bold">ISSUE DATE</text>
+      <rect x="340" y="225" width="120" height="25" fill="white" stroke="#ced4da" stroke-width="1" rx="2"/>
+      
+      <!-- Expiry Date field -->
+      <text x="480" y="220" font-family="Arial" font-size="12" fill="#495057" font-weight="bold">EXPIRY DATE</text>
+      <rect x="480" y="225" width="120" height="25" fill="white" stroke="#ced4da" stroke-width="1" rx="2"/>
+      
+      <!-- Security features placeholder -->
+      <circle cx="500" cy="150" r="30" fill="none" stroke="#28a745" stroke-width="2" opacity="0.3"/>
+      <text x="500" y="155" text-anchor="middle" font-family="Arial" font-size="8" fill="#28a745" opacity="0.5">SECURITY</text>
+      
+      <!-- Footer -->
+      <text x="300" y="340" text-anchor="middle" font-family="Arial" font-size="10" fill="#6c757d">TEST ID TEMPLATE - NOT FOR OFFICIAL USE</text>
+    </svg>
+  
