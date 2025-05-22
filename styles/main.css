@@ -302,3 +302,11 @@ hr {
 .field.focused .resize-handle {
     display: block;
 }
+
+/* Progress indicator */
+#progressWrapper {
+    width: 100%;
+}
+#progressWrapper progress {
+    width: 100%;
+}

@@ -39,6 +39,7 @@ The server will start on http://localhost:3000. Open this URL in your browser.
 5. Click **Generate IDs**.
 6. Preview the first ID on the canvas. Click **Download Preview** to save it.
 7. If multiple IDs are generated, click **Download All (ZIP)** to download a ZIP archive of all IDs.
+   If the JSZip library fails to load, this button will be disabled.
 
 ## Project Structure
 ```

@@ -19,6 +19,12 @@ const downloadPreviewButton = document.getElementById('downloadPreviewButton');
 const downloadAllButton = document.getElementById('downloadAllButton');
 const fontFamilySelect = document.getElementById('fontFamilySelect');
 const fontSizeInput = document.getElementById('fontSizeInput');
+const progressWrapper = document.getElementById('progressWrapper');
+const progressBar = document.getElementById('generationProgress');
+const progressText = document.getElementById('progressText');
+
+// Check if JSZip loaded from CDN
+const jszipAvailable = typeof window.JSZip !== 'undefined';
 
 // App State
 let templateImage = null;
@@ -293,6 +299,12 @@ generateButton.addEventListener('click', async () => {
     generateButton.disabled = true;
     generateButton.textContent = 'Generating...';
     generatedIdObjects = []; // Clear previous results
+    if (progressWrapper) {
+        progressBar.max = numIDs;
+        progressBar.value = 0;
+        progressText.textContent = `0 / ${numIDs}`;
+        progressWrapper.style.display = 'block';
+    }
 
     const idPromises = [];
 
@@ -373,6 +385,11 @@ generateButton.addEventListener('click', async () => {
                 alert('Error generating image. This might be due to CORS policy on the AI face image source. Check console for details.');
                 generatedIdObjects = [];
             }
+
+            if (progressWrapper) {
+                progressBar.value += 1;
+                progressText.textContent = `${progressBar.value} / ${numIDs}`;
+            }
         })());
     }
 
@@ -380,10 +397,15 @@ generateButton.addEventListener('click', async () => {
 
     generateButton.disabled = false;
     generateButton.textContent = 'Generate IDs';
+    if (progressWrapper) {
+        progressWrapper.style.display = 'none';
+        progressBar.value = 0;
+        progressText.textContent = '';
+    }
 
     if (generatedIdObjects.length > 0) {
         downloadPreviewButton.disabled = false;
-        if (generatedIdObjects.length > 1) {
+        if (generatedIdObjects.length > 1 && jszipAvailable) {
             downloadAllButton.style.display = 'inline-block'; // Or 'block' depending on layout
         } else {
             downloadAllButton.style.display = 'none';
@@ -411,6 +433,10 @@ downloadPreviewButton.addEventListener('click', () => {
 
 downloadAllButton.addEventListener('click', () => {
     if (generatedIdObjects.length > 1) {
+        if (typeof window.JSZip === 'undefined') {
+            alert('JSZip library failed to load. Unable to generate ZIP file.');
+            return;
+        }
         const zip = new JSZip();
         generatedIdObjects.forEach(idObj => {
             // JSZip needs the base64 part of the data URL
@@ -444,6 +470,11 @@ window.addEventListener('DOMContentLoaded', () => {
     downloadAllButton.style.display = 'none';
     fontFamilySelect.disabled = true;
     fontSizeInput.disabled = true;
+
+    if (!jszipAvailable) {
+        downloadAllButton.disabled = true;
+        console.warn('JSZip failed to load. Download All feature disabled.');
+    }
 });
 
 // For easier debugging
@@ -454,4 +485,4 @@ window.appState = {
     redraw: redrawCanvasWithTemplate,
 };
 
-console.log('App loaded. JSZip should be available.');
+console.log('App loaded.', jszipAvailable ? 'JSZip detected.' : 'JSZip NOT detected.');
