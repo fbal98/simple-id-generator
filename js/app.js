@@ -17,6 +17,8 @@ const numIDsToGenerateInput = document.getElementById('numIDsToGenerate');
 const generateButton = document.getElementById('generateButton');
 const downloadPreviewButton = document.getElementById('downloadPreviewButton');
 const downloadAllButton = document.getElementById('downloadAllButton');
+const fontFamilySelect = document.getElementById('fontFamilySelect');
+const fontSizeInput = document.getElementById('fontSizeInput');
 const progressWrapper = document.getElementById('progressWrapper');
 const progressBar = document.getElementById('generationProgress');
 const progressText = document.getElementById('progressText');
@@ -26,8 +28,9 @@ const jszipAvailable = typeof window.JSZip !== 'undefined';
 
 // App State
 let templateImage = null;
-let fields = {}; // Stores configuration of added fields: { id: {type, x, y, width, height, text} }
+let fields = {}; // Stores configuration of added fields: { id: {type, x, y, width, height, text, fontFamily, fontSize} }
 let generatedIdObjects = []; // Stores { name: string, dataUrl: string } for generated IDs
+let selectedFieldId = null;
 
 // Initialize field manager with the canvas
 fieldManager.initializeFieldManager(idCanvas);
@@ -75,12 +78,52 @@ addCivilNoFieldButton.addEventListener('click', () => addNewField('civilNo', 'Ci
 addPhotoFieldButton.addEventListener('click', () => addNewField('photo', 'Photo'));
 
 fieldManager.fieldLayer.addEventListener('field:moved', (event) => {
-    const { id, x, y, width, height } = event.detail;
+    const { id, x, y, width, height, fontFamily, fontSize } = event.detail;
     if (fields[id]) {
         fields[id].x = x;
         fields[id].y = y;
         fields[id].width = width;
         fields[id].height = height;
+        if (fontFamily) fields[id].fontFamily = fontFamily;
+        if (fontSize) fields[id].fontSize = fontSize;
+    }
+});
+
+fieldManager.fieldLayer.addEventListener('field:focused', (event) => {
+    if (event.detail) {
+        selectedFieldId = event.detail.id;
+        const field = fields[selectedFieldId];
+        if (field && field.type !== 'photo') {
+            fontFamilySelect.value = field.fontFamily || 'Arial';
+            fontSizeInput.value = field.fontSize || 16;
+            fontFamilySelect.disabled = false;
+            fontSizeInput.disabled = false;
+        } else {
+            fontFamilySelect.disabled = true;
+            fontSizeInput.disabled = true;
+        }
+    } else {
+        selectedFieldId = null;
+        fontFamilySelect.disabled = true;
+        fontSizeInput.disabled = true;
+    }
+});
+
+fontFamilySelect.addEventListener('change', () => {
+    if (selectedFieldId && fields[selectedFieldId]) {
+        const val = fontFamilySelect.value;
+        fields[selectedFieldId].fontFamily = val;
+        const el = document.getElementById(selectedFieldId);
+        if (el) el.style.fontFamily = val;
+    }
+});
+
+fontSizeInput.addEventListener('change', () => {
+    if (selectedFieldId && fields[selectedFieldId]) {
+        const size = parseInt(fontSizeInput.value, 10) || 16;
+        fields[selectedFieldId].fontSize = size;
+        const el = document.getElementById(selectedFieldId);
+        if (el) el.style.fontSize = `${size}px`;
     }
 });
 
@@ -167,7 +210,6 @@ function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textData
         targetCtx.drawImage(baseTemplate, 0, 0, targetCtx.canvas.width, targetCtx.canvas.height);
     }
 
-    targetCtx.font = '16px Arial'; // Example font, consider making this configurable per field
     targetCtx.fillStyle = 'black';
     targetCtx.textAlign = 'left';
     targetCtx.textBaseline = 'top';
@@ -218,6 +260,8 @@ function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textData
         } else {
             let textToDraw = textDataById[field.id] || `[${field.type}]`;
             console.log(`For field ID ${field.id} (type ${field.type}), drawing text: "${textToDraw}"`);
+            targetCtx.font = `${field.fontSize || 16}px ${field.fontFamily || 'Arial'}`;
+            const lineHeight = field.fontSize || 16;
             // Basic text wrapping
             const lines = [];
             let currentLine = '';
@@ -235,7 +279,7 @@ function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textData
             lines.push(currentLine);
 
             lines.forEach((line, index) => {
-                 targetCtx.fillText(line.trim(), x + 2, y + 2 + (index * 16)); // 16 for line height
+                 targetCtx.fillText(line.trim(), x + 2, y + 2 + (index * lineHeight));
             });
         }
     }
@@ -424,6 +468,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     downloadPreviewButton.disabled = true;
     downloadAllButton.style.display = 'none';
+    fontFamilySelect.disabled = true;
+    fontSizeInput.disabled = true;
+
     if (!jszipAvailable) {
         downloadAllButton.disabled = true;
         console.warn('JSZip failed to load. Download All feature disabled.');
