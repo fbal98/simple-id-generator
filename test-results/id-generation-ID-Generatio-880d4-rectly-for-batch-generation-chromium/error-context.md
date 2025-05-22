@@ -1,7 +1,7 @@
 # Test info
 
 - Name: ID Generation >> Batch ID Generation >> should update progress correctly for batch generation
-- Location: /Users/fbal98/Desktop/work/2025/Tools/simple-id-generator/tests/id-generation.spec.js:177:9
+- Location: /Users/fbal98/Desktop/work/2025/Tools/simple-id-generator/tests/id-generation.spec.js:181:9
 
 # Error details
 
@@ -17,7 +17,7 @@ Call log:
     9 × locator resolved to <div id="progressText"></div>
       - unexpected value ""
 
-    at /Users/fbal98/Desktop/work/2025/Tools/simple-id-generator/tests/id-generation.spec.js:189:34
+    at /Users/fbal98/Desktop/work/2025/Tools/simple-id-generator/tests/id-generation.spec.js:193:34
 ```
 
 # Page snapshot
@@ -58,206 +58,206 @@ Call log:
 # Test source
 
 ```ts
-   89 |       // Initially enabled
-   90 |       await expect(generateButton).toBeEnabled();
-   91 |       await expect(generateButton).toHaveText('Generate IDs');
-   92 |       
-   93 |       // Click generate
-   94 |       await generateButton.click();
-   95 |       
-   96 |       // Should be disabled and show different text
-   97 |       await expect(generateButton).toBeDisabled();
-   98 |       await expect(generateButton).toHaveText('Generating...');
+   93 |       // Initially enabled
+   94 |       await expect(generateButton).toBeEnabled();
+   95 |       await expect(generateButton).toHaveText('Generate IDs');
+   96 |       
+   97 |       // Click generate
+   98 |       await generateButton.click();
    99 |       
-  100 |       // Wait for completion
-  101 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
-  102 |       
-  103 |       // Should be enabled again
-  104 |       await expect(generateButton).toBeEnabled();
-  105 |       await expect(generateButton).toHaveText('Generate IDs');
-  106 |     });
-  107 |
-  108 |     test('should hide fields during generation', async ({ page }) => {
-  109 |       await page.click('#addNameField');
-  110 |       await page.click('#addDOBField');
-  111 |       
-  112 |       const fields = page.locator('#fieldLayer .field');
-  113 |       
-  114 |       // Fields should be visible initially
-  115 |       await expect(fields.nth(0)).toBeVisible();
-  116 |       await expect(fields.nth(1)).toBeVisible();
+  100 |       // Should be disabled and show different text
+  101 |       await expect(generateButton).toBeDisabled();
+  102 |       await expect(generateButton).toHaveText('Generating...');
+  103 |       
+  104 |       // Wait for completion
+  105 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
+  106 |       
+  107 |       // Should be enabled again
+  108 |       await expect(generateButton).toBeEnabled();
+  109 |       await expect(generateButton).toHaveText('Generate IDs');
+  110 |     });
+  111 |
+  112 |     test('should hide fields during generation', async ({ page }) => {
+  113 |       await page.click('#addNameField');
+  114 |       await page.click('#addDOBField');
+  115 |       
+  116 |       const fields = page.locator('#fieldLayer .field');
   117 |       
-  118 |       // Start generation
-  119 |       await page.click('#generateButton');
-  120 |       
-  121 |       // Fields should be hidden during generation
-  122 |       await expect(fields.nth(0)).toHaveCSS('display', 'none');
-  123 |       await expect(fields.nth(1)).toHaveCSS('display', 'none');
+  118 |       // Fields should be visible initially
+  119 |       await expect(fields.nth(0)).toBeVisible();
+  120 |       await expect(fields.nth(1)).toBeVisible();
+  121 |       
+  122 |       // Start generation
+  123 |       await page.click('#generateButton');
   124 |       
-  125 |       // Wait for completion
-  126 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
-  127 |       
-  128 |       // Fields should remain hidden after generation
-  129 |       await expect(fields.nth(0)).toHaveCSS('display', 'none');
-  130 |       await expect(fields.nth(1)).toHaveCSS('display', 'none');
-  131 |     });
-  132 |
-  133 |     test('should handle generation without photo fields', async ({ page }) => {
-  134 |       // Add only text fields
-  135 |       await page.click('#addNameField');
-  136 |       await page.click('#addDOBField');
-  137 |       await page.click('#addCivilNoField');
-  138 |       
-  139 |       await page.click('#generateButton');
-  140 |       
-  141 |       // Should complete successfully without photo fetching
-  142 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 15000 });
-  143 |       
-  144 |       await expect(page.locator('#downloadPreviewButton')).toBeEnabled();
-  145 |     });
-  146 |
-  147 |     test('should handle generation with only photo fields', async ({ page }) => {
-  148 |       await page.click('#addPhotoField');
-  149 |       
-  150 |       await page.click('#generateButton');
-  151 |       
-  152 |       // Should complete with AI face fetching
-  153 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
-  154 |       
-  155 |       await expect(page.locator('#downloadPreviewButton')).toBeEnabled();
-  156 |     });
-  157 |   });
-  158 |
-  159 |   test.describe('Batch ID Generation', () => {
-  160 |     test('should generate multiple IDs', async ({ page }) => {
-  161 |       await page.click('#addNameField');
-  162 |       await page.click('#addDOBField');
-  163 |       
-  164 |       // Set batch size
-  165 |       await page.fill('#numIDsToGenerate', '5');
-  166 |       
-  167 |       await page.click('#generateButton');
-  168 |       
-  169 |       // Wait for completion
-  170 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 45000 });
-  171 |       
-  172 |       // Download All button should be visible for multiple IDs
-  173 |       await expect(page.locator('#downloadAllButton')).toBeVisible();
-  174 |       await expect(page.locator('#downloadPreviewButton')).toBeEnabled();
-  175 |     });
-  176 |
-  177 |     test('should update progress correctly for batch generation', async ({ page }) => {
-  178 |       await page.click('#addNameField');
-  179 |       
-  180 |       const batchSize = 3;
-  181 |       await page.fill('#numIDsToGenerate', batchSize.toString());
-  182 |       
-  183 |       await page.click('#generateButton');
-  184 |       
-  185 |       const progressBar = page.locator('#generationProgress');
-  186 |       const progressText = page.locator('#progressText');
-  187 |       
-  188 |       // Check initial progress state
-> 189 |       await expect(progressText).toContainText(`0 / ${batchSize}`);
+  125 |       // Fields should be hidden during generation
+  126 |       await expect(fields.nth(0)).toHaveCSS('display', 'none');
+  127 |       await expect(fields.nth(1)).toHaveCSS('display', 'none');
+  128 |       
+  129 |       // Wait for completion
+  130 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
+  131 |       
+  132 |       // Fields should remain hidden after generation
+  133 |       await expect(fields.nth(0)).toHaveCSS('display', 'none');
+  134 |       await expect(fields.nth(1)).toHaveCSS('display', 'none');
+  135 |     });
+  136 |
+  137 |     test('should handle generation without photo fields', async ({ page }) => {
+  138 |       // Add only text fields
+  139 |       await page.click('#addNameField');
+  140 |       await page.click('#addDOBField');
+  141 |       await page.click('#addCivilNoField');
+  142 |       
+  143 |       await page.click('#generateButton');
+  144 |       
+  145 |       // Should complete successfully without photo fetching
+  146 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 15000 });
+  147 |       
+  148 |       await expect(page.locator('#downloadPreviewButton')).toBeEnabled();
+  149 |     });
+  150 |
+  151 |     test('should handle generation with only photo fields', async ({ page }) => {
+  152 |       await page.click('#addPhotoField');
+  153 |       
+  154 |       await page.click('#generateButton');
+  155 |       
+  156 |       // Should complete with AI face fetching
+  157 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
+  158 |       
+  159 |       await expect(page.locator('#downloadPreviewButton')).toBeEnabled();
+  160 |     });
+  161 |   });
+  162 |
+  163 |   test.describe('Batch ID Generation', () => {
+  164 |     test('should generate multiple IDs', async ({ page }) => {
+  165 |       await page.click('#addNameField');
+  166 |       await page.click('#addDOBField');
+  167 |       
+  168 |       // Set batch size
+  169 |       await page.fill('#numIDsToGenerate', '5');
+  170 |       
+  171 |       await page.click('#generateButton');
+  172 |       
+  173 |       // Wait for completion
+  174 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 45000 });
+  175 |       
+  176 |       // Download All button should be visible for multiple IDs
+  177 |       await expect(page.locator('#downloadAllButton')).toBeVisible();
+  178 |       await expect(page.locator('#downloadPreviewButton')).toBeEnabled();
+  179 |     });
+  180 |
+  181 |     test('should update progress correctly for batch generation', async ({ page }) => {
+  182 |       await page.click('#addNameField');
+  183 |       
+  184 |       const batchSize = 3;
+  185 |       await page.fill('#numIDsToGenerate', batchSize.toString());
+  186 |       
+  187 |       await page.click('#generateButton');
+  188 |       
+  189 |       const progressBar = page.locator('#generationProgress');
+  190 |       const progressText = page.locator('#progressText');
+  191 |       
+  192 |       // Check initial progress state
+> 193 |       await expect(progressText).toContainText(`0 / ${batchSize}`);
       |                                  ^ Error: Timed out 5000ms waiting for expect(locator).toContainText(expected)
-  190 |       
-  191 |       // Wait for some progress
-  192 |       await page.waitForFunction(() => {
-  193 |         const text = document.querySelector('#progressText')?.textContent || '';
-  194 |         return text.includes('1') || text.includes('2') || text.includes('3');
-  195 |       }, { timeout: 20000 });
-  196 |       
-  197 |       // Wait for completion
-  198 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
-  199 |       
-  200 |       // Final progress should show completion
-  201 |       const finalProgress = await progressBar.getAttribute('value');
-  202 |       expect(parseInt(finalProgress)).toBe(batchSize);
-  203 |     });
-  204 |
-  205 |     test('should show Download All button only for multiple IDs', async ({ page }) => {
-  206 |       await page.click('#addNameField');
-  207 |       
-  208 |       const downloadAllButton = page.locator('#downloadAllButton');
-  209 |       
-  210 |       // Single ID - Download All should be hidden
-  211 |       await page.fill('#numIDsToGenerate', '1');
-  212 |       await page.click('#generateButton');
-  213 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 20000 });
-  214 |       
-  215 |       await expect(downloadAllButton).toBeHidden();
-  216 |       
-  217 |       // Multiple IDs - Download All should be visible
-  218 |       await page.fill('#numIDsToGenerate', '3');
-  219 |       await page.click('#generateButton');
-  220 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
-  221 |       
-  222 |       await expect(downloadAllButton).toBeVisible();
-  223 |     });
-  224 |
-  225 |     test('should handle large batch generation', async ({ page }) => {
-  226 |       await page.click('#addNameField');
-  227 |       await page.click('#addDOBField');
-  228 |       
-  229 |       // Test larger batch (but reasonable for CI)
-  230 |       await page.fill('#numIDsToGenerate', '10');
-  231 |       
-  232 |       await page.click('#generateButton');
-  233 |       
-  234 |       // Wait for completion with longer timeout
-  235 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 60000 });
-  236 |       
-  237 |       await expect(page.locator('#downloadAllButton')).toBeVisible();
-  238 |       await expect(page.locator('#downloadPreviewButton')).toBeEnabled();
-  239 |     });
-  240 |   });
-  241 |
-  242 |   test.describe('Data Generation Validation', () => {
-  243 |     test('should generate different data for each ID in batch', async ({ page }) => {
-  244 |       await page.click('#addNameField');
-  245 |       
-  246 |       // Generate 3 IDs to check data variation
-  247 |       await page.fill('#numIDsToGenerate', '3');
-  248 |       await page.click('#generateButton');
-  249 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
-  250 |       
-  251 |       // Check that app state contains generated data
-  252 |       const generatedIds = await page.evaluate(() => {
-  253 |         return window.appState.getGeneratedIds();
-  254 |       });
-  255 |       
-  256 |       expect(generatedIds).toHaveLength(3);
-  257 |       
-  258 |       // Each ID should have unique data
-  259 |       const names = generatedIds.map(id => id.instanceData.text[Object.keys(id.instanceData.text)[0]]);
-  260 |       const uniqueNames = new Set(names);
+  194 |       
+  195 |       // Wait for some progress
+  196 |       await page.waitForFunction(() => {
+  197 |         const text = document.querySelector('#progressText')?.textContent || '';
+  198 |         return text.includes('1') || text.includes('2') || text.includes('3');
+  199 |       }, { timeout: 20000 });
+  200 |       
+  201 |       // Wait for completion
+  202 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
+  203 |       
+  204 |       // Final progress should show completion
+  205 |       const finalProgress = await progressBar.getAttribute('value');
+  206 |       expect(parseInt(finalProgress)).toBe(batchSize);
+  207 |     });
+  208 |
+  209 |     test('should show Download All button only for multiple IDs', async ({ page }) => {
+  210 |       await page.click('#addNameField');
+  211 |       
+  212 |       const downloadAllButton = page.locator('#downloadAllButton');
+  213 |       
+  214 |       // Single ID - Download All should be hidden
+  215 |       await page.fill('#numIDsToGenerate', '1');
+  216 |       await page.click('#generateButton');
+  217 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 20000 });
+  218 |       
+  219 |       await expect(downloadAllButton).toBeHidden();
+  220 |       
+  221 |       // Multiple IDs - Download All should be visible
+  222 |       await page.fill('#numIDsToGenerate', '3');
+  223 |       await page.click('#generateButton');
+  224 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
+  225 |       
+  226 |       await expect(downloadAllButton).toBeVisible();
+  227 |     });
+  228 |
+  229 |     test('should handle large batch generation', async ({ page }) => {
+  230 |       await page.click('#addNameField');
+  231 |       await page.click('#addDOBField');
+  232 |       
+  233 |       // Test larger batch (but reasonable for CI)
+  234 |       await page.fill('#numIDsToGenerate', '10');
+  235 |       
+  236 |       await page.click('#generateButton');
+  237 |       
+  238 |       // Wait for completion with longer timeout
+  239 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 60000 });
+  240 |       
+  241 |       await expect(page.locator('#downloadAllButton')).toBeVisible();
+  242 |       await expect(page.locator('#downloadPreviewButton')).toBeEnabled();
+  243 |     });
+  244 |   });
+  245 |
+  246 |   test.describe('Data Generation Validation', () => {
+  247 |     test('should generate different data for each ID in batch', async ({ page }) => {
+  248 |       await page.click('#addNameField');
+  249 |       
+  250 |       // Generate 3 IDs to check data variation
+  251 |       await page.fill('#numIDsToGenerate', '3');
+  252 |       await page.click('#generateButton');
+  253 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 30000 });
+  254 |       
+  255 |       // Check that app state contains generated data
+  256 |       const generatedIds = await page.evaluate(() => {
+  257 |         return window.appState.getGeneratedIds();
+  258 |       });
+  259 |       
+  260 |       expect(generatedIds).toHaveLength(3);
   261 |       
-  262 |       // Should have some variation (though not guaranteed to be all unique due to random generation)
-  263 |       expect(uniqueNames.size).toBeGreaterThan(0);
-  264 |     });
-  265 |
-  266 |     test('should generate valid date formats', async ({ page }) => {
-  267 |       await page.click('#addDOBField');
-  268 |       await page.click('#addIssueDateField');
-  269 |       await page.click('#addExpiryDateField');
-  270 |       
-  271 |       await page.click('#generateButton');
-  272 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 20000 });
-  273 |       
-  274 |       const generatedIds = await page.evaluate(() => {
-  275 |         return window.appState.getGeneratedIds();
-  276 |       });
+  262 |       // Each ID should have unique data
+  263 |       const names = generatedIds.map(id => id.instanceData.text[Object.keys(id.instanceData.text)[0]]);
+  264 |       const uniqueNames = new Set(names);
+  265 |       
+  266 |       // Should have some variation (though not guaranteed to be all unique due to random generation)
+  267 |       expect(uniqueNames.size).toBeGreaterThan(0);
+  268 |     });
+  269 |
+  270 |     test('should generate valid date formats', async ({ page }) => {
+  271 |       await page.click('#addDOBField');
+  272 |       await page.click('#addIssueDateField');
+  273 |       await page.click('#addExpiryDateField');
+  274 |       
+  275 |       await page.click('#generateButton');
+  276 |       await page.waitForSelector('#generateButton:not([disabled])', { timeout: 20000 });
   277 |       
-  278 |       expect(generatedIds).toHaveLength(1);
-  279 |       
-  280 |       const textData = generatedIds[0].instanceData.text;
-  281 |       const dateFields = Object.values(textData);
-  282 |       
-  283 |       // Check date format (YYYY-MM-DD)
-  284 |       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  285 |       dateFields.forEach(date => {
-  286 |         expect(date).toMatch(dateRegex);
-  287 |       });
-  288 |     });
-  289 |
+  278 |       const generatedIds = await page.evaluate(() => {
+  279 |         return window.appState.getGeneratedIds();
+  280 |       });
+  281 |       
+  282 |       expect(generatedIds).toHaveLength(1);
+  283 |       
+  284 |       const textData = generatedIds[0].instanceData.text;
+  285 |       const dateFields = Object.values(textData);
+  286 |       
+  287 |       // Check date format (YYYY-MM-DD)
+  288 |       const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  289 |       dateFields.forEach(date => {
+  290 |         expect(date).toMatch(dateRegex);
+  291 |       });
+  292 |     });
+  293 |
 ```

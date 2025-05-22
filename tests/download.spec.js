@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
+import { setupFaceMocking } from './fixtures/mock-face.js';
 
 test.describe('Download Functionality', () => {
   test.beforeEach(async ({ page }) => {
+    // Setup face mocking for offline testing
+    await setupFaceMocking(page);
     await page.goto('/');
     
     // Upload template and add fields

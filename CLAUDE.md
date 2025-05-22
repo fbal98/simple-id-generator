@@ -25,7 +25,7 @@ The application will be available at http://localhost:3000
 
 ### Testing
 
-The project includes comprehensive E2E tests using Playwright:
+The project includes comprehensive E2E tests using Playwright with **offline-first testing** approach:
 
 ```bash
 # Install test dependencies
@@ -53,12 +53,18 @@ bun run test:debug
 bun run test:ui
 ```
 
+**Offline Testing Features:**
+- ✅ **No Internet Required**: All tests work without network connectivity
+- ✅ **Mock API Responses**: `/api/face` endpoint is mocked with base64 placeholder images
+- ✅ **Realistic Scenarios**: Tests use actual Omani ID template structure
+- ✅ **Performance Optimized**: Disabled video/screenshot recording for speed
+
 **Test Coverage:**
 - Template upload and validation
 - Field management (drag, resize, styling)
 - ID generation with random data
 - Download functionality (PNG/ZIP)
-- Server proxy and API endpoints
+- Server proxy and API endpoints (mocked offline)
 - Error scenarios and edge cases
 - Cross-browser compatibility
 

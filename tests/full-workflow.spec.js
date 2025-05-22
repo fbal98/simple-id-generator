@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
+import { setupFaceMocking } from './fixtures/mock-face.js';
 
 test.describe('Complete User Workflows', () => {
   test.describe('End-to-End ID Generation Workflow', () => {
     test('should complete full ID creation workflow', async ({ page }) => {
+      // Setup face mocking for offline testing
+      await setupFaceMocking(page);
       await page.goto('/');
       
       // Step 1: Upload template
@@ -95,6 +98,7 @@ test.describe('Complete User Workflows', () => {
     });
 
     test('should handle workflow with only text fields', async ({ page }) => {
+      await setupFaceMocking(page);
       await page.goto('/');
       
       // Upload template
@@ -135,6 +139,7 @@ test.describe('Complete User Workflows', () => {
     });
 
     test('should handle workflow with only photo fields', async ({ page }) => {
+      await setupFaceMocking(page);
       await page.goto('/');
       
       // Upload template

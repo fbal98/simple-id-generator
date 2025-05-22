@@ -8,7 +8,11 @@
       "Bash(bun tests/fixtures/create-test-images.js:*)",
       "Bash(bun tests/fixtures/create-realistic-template.js:*)",
       "Bash(bun test:*)",
-      "Bash(bun run test:smoke:*)"
+      "Bash(bun run test:smoke:*)",
+      "Bash(mv:*)",
+      "Bash(rm:*)",
+      "Bash(bun run test:core:*)",
+      "Bash(bun run test:*)"
     ],
     "deny": []
   }

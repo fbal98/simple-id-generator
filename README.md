@@ -33,7 +33,7 @@ bun start
 The server will start on http://localhost:3000. Open this URL in your browser.
 
 ## Testing
-This project includes comprehensive E2E tests covering all user workflows:
+This project includes comprehensive E2E tests with **offline-first testing** - no internet required!
 
 ```bash
 # Install Playwright browsers
@@ -56,12 +56,18 @@ bun run test:debug
 bun run test:ui
 ```
 
+**Offline Testing Features:**
+- 🌐 **No Internet Required**: All tests work without network connectivity
+- 🎭 **Mock API Responses**: AI face endpoint mocked with placeholder images
+- ⚡ **Performance Optimized**: Disabled video/screenshot recording for speed
+- 🎯 **Realistic Scenarios**: Uses actual Omani ID template structure
+
 **Test Coverage:**
 - ✅ Template upload and validation
 - ✅ Field management (drag, resize, styling)
 - ✅ ID generation with random data
 - ✅ Download functionality (PNG/ZIP)
-- ✅ Server proxy and API endpoints
+- ✅ Server proxy and API endpoints (mocked offline)
 - ✅ Error scenarios and edge cases
 - ✅ Cross-browser compatibility (Chromium, Firefox, WebKit)
 

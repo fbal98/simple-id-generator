@@ -1,8 +1,11 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
+import { setupFaceMocking, setupFaceErrorMocking } from './fixtures/mock-face.js';
 
 test.describe('Error Scenarios and Edge Cases', () => {
   test.beforeEach(async ({ page }) => {
+    // Setup face mocking for offline testing
+    await setupFaceMocking(page);
     await page.goto('/');
   });
 
