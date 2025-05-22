@@ -225,7 +225,7 @@ export function addField(type, placeholderText = 'Text Field') {
 }
 
 function dispatchFieldUpdate(fieldElement) {
-  const event = new CustomEvent('field:moved', { // Reusing 'field:moved' for simplicity
+  const event = new CustomEvent('field:moved', { // Reusing 'field:moved' for simplicity, also for resize/text updates
     detail: {
       id: fieldElement.id,
       type: fieldElement.dataset.type,
@@ -233,7 +233,7 @@ function dispatchFieldUpdate(fieldElement) {
       y: fieldElement.offsetTop,
       width: fieldElement.offsetWidth,
       height: fieldElement.offsetHeight,
-      text: fieldElement.textContent,
+      text: fieldElement.textContent, // Ensure current text is dispatched
       fontFamily: fieldElement.style.fontFamily || 'Arial',
       fontSize: parseInt(fieldElement.style.fontSize, 10) || 16
     }
@@ -270,6 +270,21 @@ export function clearFields() {
     }
     fieldCounter = 0;
     setFocusedField(null);
+}
+
+export function updateFieldOverlayText(fieldId, newText) {
+    const fieldElement = fields[fieldId]; // fields is the internal map of fieldId -> DOM element
+    if (fieldElement && fieldElement.dataset.type !== 'photo') {
+        fieldElement.textContent = newText;
+        // Adjust height for auto-sized text fields
+        fieldElement.style.height = 'auto';
+        // Force reflow to get new auto height
+        let autoHeight = fieldElement.offsetHeight;
+        fieldElement.style.height = `${Math.max(MIN_HEIGHT, autoHeight)}px`;
+        // dispatchFieldUpdate(fieldElement); // Dispatch update so app.js can sync if needed (e.g. fields[id].text)
+                                          // This is now implicitly handled as app.js calls this, then if user moves/resizes,
+                                          // dispatchFieldUpdate will occur with the new text.
+    }
 }
 
 export function hideAllFields() {

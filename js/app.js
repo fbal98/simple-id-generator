@@ -81,12 +81,13 @@ addCivilNoFieldButton.addEventListener('click', () => addNewField('civilNo', 'Ci
 addPhotoFieldButton.addEventListener('click', () => addNewField('photo', 'Photo'));
 
 fieldManager.fieldLayer.addEventListener('field:moved', (event) => {
-    const { id, x, y, width, height, fontFamily, fontSize } = event.detail;
+    const { id, x, y, width, height, fontFamily, fontSize, text } = event.detail;
     if (fields[id]) {
         fields[id].x = x;
         fields[id].y = y;
         fields[id].width = width;
         fields[id].height = height;
+        fields[id].text = text; // Update text in app state, reflects current overlay content
         if (fontFamily) fields[id].fontFamily = fontFamily;
         if (fontSize) fields[id].fontSize = fontSize;
     }
@@ -364,7 +365,12 @@ generateButton.addEventListener('click', async () => {
 
             try {
                 const dataUrl = offscreenCanvas.toDataURL('image/png');
-                generatedIdObjects[i] = { name: `id_${i + 1}.png`, dataUrl: dataUrl };
+                // Store instanceData along with name and dataUrl
+                generatedIdObjects[i] = {
+                    name: `id_${i + 1}.png`,
+                    dataUrl: dataUrl,
+                    instanceData: idInstanceData // Contains .text and .photos (Image objects)
+                };
 
                 if (i === 0) {
                     const previewImage = new Image();
@@ -429,9 +435,63 @@ downloadPreviewButton.addEventListener('click', () => {
 });
 
 editLayoutButton.addEventListener('click', () => {
+    // Canvas should retain the first generated ID preview. Do not call redrawCanvasWithTemplate().
     fieldManager.showAllFields();
-    redrawCanvasWithTemplate();
+
+    if (generatedIdObjects.length > 0 && generatedIdObjects[0].instanceData) {
+        const firstIdTextData = generatedIdObjects[0].instanceData.text; // Get text data from the first ID
+
+        for (const fieldId in fields) { // 'fields' is the app.js state object for field configurations
+            const fieldConfig = fields[fieldId];
+            if (fieldConfig.type !== 'photo') {
+                const generatedText = firstIdTextData[fieldId];
+                if (generatedText !== undefined) {
+                    fieldManager.updateFieldOverlayText(fieldId, generatedText);
+                } else {
+                    // If for some reason this specific field has no generated data, use its current placeholder/text
+                    fieldManager.updateFieldOverlayText(fieldId, fieldConfig.text);
+                }
+            } else {
+                // For photo fields, ensure the placeholder text is "Photo Area"
+                const photoFieldElement = document.getElementById(fieldId);
+                if (photoFieldElement) {
+                    photoFieldElement.textContent = "Photo Area";
+                }
+            }
+        }
+    } else {
+        // Fallback: If no generated data is available (e.g. editing before generation, or error)
+        // Revert all field overlays to their current configured text (placeholders if fresh).
+        for (const fieldId in fields) {
+            const fieldConfig = fields[fieldId];
+            if (fieldConfig.type === 'photo') {
+                const photoFieldElement = document.getElementById(fieldId);
+                if (photoFieldElement) photoFieldElement.textContent = "Photo Area";
+            } else {
+                fieldManager.updateFieldOverlayText(fieldId, fieldConfig.text);
+            }
+        }
+    }
+
     editLayoutButton.style.display = 'none';
+    // downloadPreviewButton.disabled = false; // Should already be enabled if editLayoutButton is visible
+    // downloadAllButton related display logic is handled by generateButton handler.
+
+    // Ensure font controls are correctly enabled/disabled based on focused field
+    const currentFocusedFieldElement = document.querySelector('.field.focused');
+    if (currentFocusedFieldElement) {
+        // Trigger the focus event handler to update controls
+        const focusEvent = new CustomEvent('field:focused', {
+            detail: {
+                id: currentFocusedFieldElement.id,
+                type: currentFocusedFieldElement.dataset.type
+            }
+        });
+        fieldManager.fieldLayer.dispatchEvent(focusEvent);
+    } else {
+        fontFamilySelect.disabled = true;
+        fontSizeInput.disabled = true;
+    }
 });
 
 downloadAllButton.addEventListener('click', () => {
