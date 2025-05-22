@@ -91,6 +91,10 @@ body {
     box-shadow: var(--shadow-md);
 }
 
+#idCanvas.empty-canvas {
+    border-style: dashed;
+}
+
 /* === Typography === */
 h3, h4 {
     margin-top: 0;
@@ -140,6 +144,18 @@ input[type="number"] {
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
+select {
+    width: 100%;
+    padding: var(--input-padding-y) var(--input-padding-x);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-sizing: border-box;
+    background-color: var(--panel-background);
+    color: var(--text-color-primary);
+    font-size: 0.9rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
 input[type="file"] {
     padding-top: var(--spacing-sm); /* Adjust for file input specifics */
     padding-bottom: var(--spacing-sm);
@@ -164,6 +180,12 @@ input[type="file"]::file-selector-button:hover {
 
 input:focus,
 input[type="file"]:focus-within { /* For file input, focus on wrapper */
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+select:focus {
     outline: none;
     border-color: var(--primary-color);
     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
@@ -199,6 +221,14 @@ button:disabled {
     color: #6c757d;
     cursor: not-allowed;
     box-shadow: none;
+}
+
+select:disabled,
+input[type="number"]:disabled {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
 }
 
 /* Button variants */
@@ -283,6 +313,17 @@ hr {
 .field[data-type="photo"]:hover,
 .field[data-type="photo"].focused {
     border-color: var(--danger-color-border);
+}
+
+/* Enhanced visual feedback when a field is focused */
+.field.focused {
+    border-width: 2px;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.field[data-type="photo"].focused {
+    border-width: 2px;
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
 }
 
 .field .resize-handle {
