@@ -16,12 +16,12 @@
         </div>
         <hr>
         <h4>Add Fields:</h4>
-        <div class="form-group"><button id="addNameField">Add Name</button></div>
-        <div class="form-group"><button id="addDOBField">Add Date of Birth</button></div>
-        <div class="form-group"><button id="addIssueDateField">Add Issue Date</button></div>
-        <div class="form-group"><button id="addExpiryDateField">Add Expiry Date</button></div>
-        <div class="form-group"><button id="addCivilNoField">Add Civil Number</button></div>
-        <div class="form-group"><button id="addPhotoField">Add Photo Area</button></div>
+        <div class="form-group"><button id="addNameField" title="Add a draggable name field to the template">Add Name</button></div>
+        <div class="form-group"><button id="addDOBField" title="Add a draggable date of birth field to the template">Add Date of Birth</button></div>
+        <div class="form-group"><button id="addIssueDateField" title="Add a draggable issue date field to the template">Add Issue Date</button></div>
+        <div class="form-group"><button id="addExpiryDateField" title="Add a draggable expiry date field to the template">Add Expiry Date</button></div>
+        <div class="form-group"><button id="addCivilNoField" title="Add a draggable civil number field to the template">Add Civil Number</button></div>
+        <div class="form-group"><button id="addPhotoField" title="Add a draggable photo area to the template">Add Photo Area</button></div>
         <hr>
         <h4>Field Font</h4>
         <div class="form-group">
@@ -51,7 +51,7 @@
             <input type="number" id="numIDsToGenerate" value="1" min="1">
         </div>
         <div class="form-group">
-            <button id="generateButton" class="btn-primary">Generate IDs</button>
+            <button id="generateButton" class="btn-primary" title="Generate the specified number of IDs">Generate IDs</button>
             <div id="progressWrapper" style="display:none; margin-top:8px;">
                 <progress id="generationProgress" value="0" max="1" style="width:100%;"></progress>
                 <div id="progressText" style="text-align:center;font-size:0.85rem;margin-top:4px;"></div>
@@ -60,10 +60,10 @@
         <hr>
         <h4>Preview & Download</h4>
         <div class="form-group">
-            <button id="downloadPreviewButton" class="btn-secondary">Download Preview</button>
+            <button id="downloadPreviewButton" class="btn-secondary" title="Download a preview of the first generated ID">Download Preview</button>
         </div>
         <div class="form-group">
-            <button id="downloadAllButton" class="btn-success" style="display: none;">Download All (ZIP)</button>
+            <button id="downloadAllButton" class="btn-success" style="display: none;" title="Download all generated IDs as a ZIP file">Download All (ZIP)</button>
         </div>
     </div>
 

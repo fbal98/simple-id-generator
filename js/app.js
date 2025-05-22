@@ -133,13 +133,16 @@ function redrawCanvasWithTemplate() {
     ctx.clearRect(0, 0, idCanvas.width, idCanvas.height);
     if (templateImage) {
         ctx.drawImage(templateImage, 0, 0, idCanvas.width, idCanvas.height);
+        idCanvas.classList.remove('empty-canvas');
     } else {
         ctx.fillStyle = '#f0f0f0';
         ctx.fillRect(0, 0, idCanvas.width, idCanvas.height);
-        ctx.fillStyle = '#777';
+        ctx.fillStyle = '#555';
         ctx.textAlign = 'center';
-        ctx.font = '16px Arial';
+        ctx.textBaseline = 'middle';
+        ctx.font = '18px Arial';
         ctx.fillText('Upload a template image', idCanvas.width / 2, idCanvas.height / 2);
+        idCanvas.classList.add('empty-canvas');
     }
 }
 
