@@ -242,24 +242,6 @@ function dispatchFieldUpdate(fieldElement) {
   console.log('Field updated:', event.detail);
 }
 
-export function getFieldPositions() {
-  const positions = {};
-  for (const id in fields) {
-    const field = fields[id];
-    positions[id] = {
-      id: field.id,
-      type: field.dataset.type,
-      x: field.offsetLeft,
-      y: field.offsetTop,
-      width: field.offsetWidth,
-      height: field.offsetHeight,
-      text: field.textContent,
-      fontFamily: field.style.fontFamily || 'Arial',
-      fontSize: parseInt(field.style.fontSize, 10) || 16
-    };
-  }
-  return positions;
-}
 
 export function clearFields() {
     while (fieldLayer.firstChild) {
@@ -305,10 +287,6 @@ export function showAllFields() {
     }
 }
 
-export function cleanupFieldManager() {
-    window.removeEventListener('resize', updateFieldLayerPosition);
-    document.removeEventListener('click', handleDocumentClick, true);
-}
 
 // Expose fieldLayer for app.js to potentially listen to events on it
 export { fieldLayer };
