@@ -129,6 +129,7 @@ export function addField(type, placeholderText = 'Text Field') {
     dragStartLeft = field.offsetLeft;
     dragStartTop = field.offsetTop;
 
+    field.classList.add('dragging'); // Disable transitions during drag
     document.addEventListener('pointermove', onDragPointerMove);
     document.addEventListener('pointerup', onDragPointerUp);
   });
@@ -147,6 +148,7 @@ export function addField(type, placeholderText = 'Text Field') {
   }
 
   function onDragPointerUp() {
+    field.classList.remove('dragging'); // Re-enable transitions after drag
     document.removeEventListener('pointermove', onDragPointerMove);
     document.removeEventListener('pointerup', onDragPointerUp);
     dispatchFieldUpdate(field);
@@ -169,6 +171,7 @@ export function addField(type, placeholderText = 'Text Field') {
     resizeInitialFieldLeft = field.offsetLeft;
     resizeInitialFieldTop = field.offsetTop;
 
+    field.classList.add('dragging'); // Disable transitions during resize
     document.addEventListener('pointermove', onResizePointerMove);
     document.addEventListener('pointerup', onResizePointerUp);
   });
@@ -199,6 +202,7 @@ export function addField(type, placeholderText = 'Text Field') {
   }
 
   function onResizePointerUp() {
+    field.classList.remove('dragging'); // Re-enable transitions after resize
     document.removeEventListener('pointermove', onResizePointerMove);
     document.removeEventListener('pointerup', onResizePointerUp);
     // For text fields, ensure height is correctly set after auto adjustment one last time
@@ -274,13 +278,18 @@ export function clearFields() {
 
 export function updateFieldOverlayText(fieldId, newText) {
     const fieldElement = fields[fieldId]; // fields is the internal map of fieldId -> DOM element
-    if (fieldElement && fieldElement.dataset.type !== 'photo') {
-        fieldElement.textContent = newText;
-        // Adjust height for auto-sized text fields
-        fieldElement.style.height = 'auto';
-        // Force reflow to get new auto height
-        let autoHeight = fieldElement.offsetHeight;
-        fieldElement.style.height = `${Math.max(MIN_HEIGHT, autoHeight)}px`;
+    if (fieldElement) {
+        if (fieldElement.dataset.type === 'photo') {
+            // For photo fields in generated mode, clear the text content
+            fieldElement.textContent = '';
+        } else {
+            fieldElement.textContent = newText;
+            // Adjust height for auto-sized text fields
+            fieldElement.style.height = 'auto';
+            // Force reflow to get new auto height
+            let autoHeight = fieldElement.offsetHeight;
+            fieldElement.style.height = `${Math.max(MIN_HEIGHT, autoHeight)}px`;
+        }
         // dispatchFieldUpdate(fieldElement); // Dispatch update so app.js can sync if needed (e.g. fields[id].text)
                                           // This is now implicitly handled as app.js calls this, then if user moves/resizes,
                                           // dispatchFieldUpdate will occur with the new text.

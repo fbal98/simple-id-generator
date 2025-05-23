@@ -547,6 +547,7 @@ hr {
 #fieldLayer {
     position: absolute;
     pointer-events: none;
+    z-index: 10;
 }
 
 .field {
@@ -562,9 +563,15 @@ hr {
     user-select: none;
     border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.1);
-    transition: all var(--transition-fast);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
     animation: fieldAppear var(--transition-bounce) ease-out;
     backdrop-filter: blur(8px);
+    z-index: 20;
+}
+
+/* Disable transitions during drag for optimal performance */
+.field.dragging {
+    transition: none !important;
 }
 
 @keyframes fieldAppear {
@@ -674,6 +681,25 @@ button:not(:disabled):active {
     animation: pulse 0.5s;
 }
 
+/* === Generated mode styles === */
+.field.generated-mode[data-type="photo"] {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px dashed rgba(244, 63, 94, 0.3);
+    color: transparent;
+    backdrop-filter: none;
+}
+
+.field.generated-mode[data-type="photo"]:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(244, 63, 94, 0.5);
+}
+
+.field.generated-mode[data-type="photo"].focused {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: var(--danger-color);
+    box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.2);
+}
+
 /* === Responsive adjustments === */
 @media (max-width: 1400px) {
     #leftPanel, #rightPanel {
@@ -764,4 +790,36 @@ input,
 select,
 #idCanvas {
     will-change: transform;
+}
+
+/* === Generated mode field styling === */
+.field.generated-mode {
+    background: rgba(59, 130, 246, 0.3);
+    backdrop-filter: none;
+    border-color: rgba(59, 130, 246, 0.5);
+}
+
+.field.generated-mode:hover {
+    background: rgba(59, 130, 246, 0.4);
+    border-color: var(--primary-color);
+}
+
+.field.generated-mode.focused {
+    background: rgba(59, 130, 246, 0.5);
+    border-color: var(--primary-color);
+}
+
+.field[data-type="photo"].generated-mode {
+    background: rgba(244, 63, 94, 0.3);
+    border-color: rgba(244, 63, 94, 0.5);
+}
+
+.field[data-type="photo"].generated-mode:hover {
+    background: rgba(244, 63, 94, 0.4);
+    border-color: var(--danger-color);
+}
+
+.field[data-type="photo"].generated-mode.focused {
+    background: rgba(244, 63, 94, 0.5);
+    border-color: var(--danger-color);
 }

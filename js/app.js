@@ -32,9 +32,84 @@ let templateImage = null;
 let fields = {}; // Stores configuration of added fields: { id: {type, x, y, width, height, text, fontFamily, fontSize} }
 let generatedIdObjects = []; // Stores { name: string, dataUrl: string } for generated IDs
 let selectedFieldId = null;
+let isInEditMode = false; // Track if we're in edit layout mode
+let lastGeneratedData = null; // Stores the most recent generated content
+let isContentGenerated = false; // Whether we have generated content to edit
 
 // Initialize field manager with the canvas
 fieldManager.initializeFieldManager(idCanvas);
+
+// Function to update preview with current field positions
+// This is no longer used in edit mode since we keep the canvas showing only the template
+function updatePreviewWithCurrentPositions() {
+    // This function is deprecated - we don't update canvas in edit mode
+    return;
+}
+
+// Debounced version to avoid excessive re-renders during dragging
+// This is no longer used since we don't update canvas in edit mode
+function debouncedUpdatePreview() {
+    // Deprecated - we don't update canvas in edit mode
+    return;
+}
+
+// Function to update overlay fields with generated content
+function updateOverlaysWithGeneratedContent(generatedTextData) {
+    if (!generatedTextData) return;
+    
+    // Update each field overlay with its corresponding generated content
+    Object.keys(fields).forEach(fieldId => {
+        const field = fields[fieldId];
+        if (field && field.type !== 'photo' && generatedTextData[fieldId]) {
+            // Update the overlay text with generated content
+            fieldManager.updateFieldOverlayText(fieldId, generatedTextData[fieldId]);
+            // Update the app state to reflect the new content
+            fields[fieldId].text = generatedTextData[fieldId];
+        } else if (field && field.type === 'photo') {
+            // For photo fields, clear any text and keep overlay minimal
+            fieldManager.updateFieldOverlayText(fieldId, '');
+            fields[fieldId].text = ''; // Clear text in app state too
+        }
+    });
+}
+
+// Function to reset overlays to placeholder text
+function resetOverlaysToPlaceholders() {
+    Object.keys(fields).forEach(fieldId => {
+        const field = fields[fieldId];
+        if (field) {
+            let placeholderText = '';
+            switch (field.type) {
+                case 'name':
+                    placeholderText = 'Full Name';
+                    break;
+                case 'dob':
+                case 'issueDate':
+                case 'expiryDate':
+                    placeholderText = 'YYYY-MM-DD';
+                    break;
+                case 'civilNo':
+                    placeholderText = 'Civil Number/ID';
+                    break;
+                case 'photo':
+                    placeholderText = 'Photo Area';
+                    break;
+                default:
+                    placeholderText = 'Text Field';
+            }
+            
+            // Update overlay text and app state
+            fieldManager.updateFieldOverlayText(fieldId, placeholderText);
+            fields[fieldId].text = placeholderText;
+            
+            // Remove generated mode styling
+            const fieldElement = document.getElementById(fieldId);
+            if (fieldElement) {
+                fieldElement.classList.remove('generated-mode');
+            }
+        }
+    });
+}
 
 // Event Listeners
 
@@ -54,6 +129,9 @@ templateUpload.addEventListener('change', (event) => {
                 generatedIdObjects = [];
                 downloadAllButton.style.display = 'none';
                 editLayoutButton.style.display = 'none';
+                isInEditMode = false;
+                lastGeneratedData = null;
+                isContentGenerated = false;
             };
             templateImage.src = e.target.result;
         };
@@ -70,6 +148,15 @@ function addNewField(type, placeholderText) {
     const fieldData = fieldManager.addField(type, placeholderText);
     if (fieldData) {
         fields[fieldData.id] = fieldData;
+        
+        // If we're in edit mode, apply the styling to the new field but keep placeholder text
+        if (isInEditMode) {
+            const fieldElement = document.getElementById(fieldData.id);
+            if (fieldElement) {
+                fieldElement.classList.add('generated-mode');
+                // New fields always start with placeholder text, even in edit mode
+            }
+        }
     }
 }
 
@@ -90,6 +177,9 @@ fieldManager.fieldLayer.addEventListener('field:moved', (event) => {
         fields[id].text = text; // Update text in app state, reflects current overlay content
         if (fontFamily) fields[id].fontFamily = fontFamily;
         if (fontSize) fields[id].fontSize = fontSize;
+        
+        // In edit mode, don't update the canvas - keep it showing only the template
+        // The overlays will show the content
     }
 });
 
@@ -119,6 +209,8 @@ fontFamilySelect.addEventListener('change', () => {
         fields[selectedFieldId].fontFamily = val;
         const el = document.getElementById(selectedFieldId);
         if (el) el.style.fontFamily = val;
+        
+        // In edit mode, don't update the canvas - keep it showing only the template
     }
 });
 
@@ -128,6 +220,8 @@ fontSizeInput.addEventListener('change', () => {
         fields[selectedFieldId].fontSize = size;
         const el = document.getElementById(selectedFieldId);
         if (el) el.style.fontSize = `${size}px`;
+        
+        // In edit mode, don't update the canvas - keep it showing only the template
     }
 });
 
@@ -295,6 +389,9 @@ generateButton.addEventListener('click', async () => {
     generateButton.disabled = true;
     generateButton.textContent = 'Generating...';
     generatedIdObjects = []; // Clear previous results
+    
+    // Exit edit mode if we're in it
+    isInEditMode = false;
     if (progressWrapper) {
         progressBar.max = numIDs;
         progressBar.value = 0;
@@ -374,10 +471,16 @@ generateButton.addEventListener('click', async () => {
                 };
 
                 if (i === 0) {
+                    // Store generated data for edit mode
+                    lastGeneratedData = idInstanceData;
+                    isContentGenerated = true;
+                    isInEditMode = false;
+                    
                     const previewImage = new Image();
                     previewImage.onload = () => {
                         ctx.clearRect(0, 0, idCanvas.width, idCanvas.height);
                         ctx.drawImage(previewImage, 0, 0);
+                        // Hide overlays in preview mode - only show the rendered ID
                         fieldManager.hideAllFields();
                     };
                     previewImage.src = dataUrl;
@@ -408,6 +511,7 @@ generateButton.addEventListener('click', async () => {
     if (generatedIdObjects.length > 0) {
         downloadPreviewButton.disabled = false;
         editLayoutButton.style.display = 'inline-block';
+        fieldManager.showAllFields(); // Show fields again so user can continue editing
         if (generatedIdObjects.length > 1 && jszipAvailable) {
             downloadAllButton.style.display = 'inline-block'; // Or 'block' depending on layout
         } else {
@@ -417,6 +521,9 @@ generateButton.addEventListener('click', async () => {
         downloadPreviewButton.disabled = true;
         editLayoutButton.style.display = 'none';
         downloadAllButton.style.display = 'none';
+        isInEditMode = false;
+        lastGeneratedData = null;
+        isContentGenerated = false;
         redrawCanvasWithTemplate(); // Show blank template if generation failed
     }
 });
@@ -436,63 +543,27 @@ downloadPreviewButton.addEventListener('click', () => {
 });
 
 editLayoutButton.addEventListener('click', () => {
-    // Canvas should retain the first generated ID preview. Do not call redrawCanvasWithTemplate().
+    // Enter edit mode
+    isInEditMode = true;
     fieldManager.showAllFields();
-
-    if (generatedIdObjects.length > 0 && generatedIdObjects[0].instanceData) {
-        const firstIdTextData = generatedIdObjects[0].instanceData.text; // Get text data from the first ID
-
-        for (const fieldId in fields) { // 'fields' is the app.js state object for field configurations
-            const fieldConfig = fields[fieldId];
-            if (fieldConfig.type !== 'photo') {
-                const generatedText = firstIdTextData[fieldId];
-                if (generatedText !== undefined) {
-                    fieldManager.updateFieldOverlayText(fieldId, generatedText);
-                } else {
-                    // If for some reason this specific field has no generated data, use its current placeholder/text
-                    fieldManager.updateFieldOverlayText(fieldId, fieldConfig.text);
-                }
-            } else {
-                // For photo fields, ensure the placeholder text is "Photo Area"
-                const photoFieldElement = document.getElementById(fieldId);
-                if (photoFieldElement) {
-                    photoFieldElement.textContent = "Photo Area";
-                }
-            }
-        }
-    } else {
-        // Fallback: If no generated data is available (e.g. editing before generation, or error)
-        // Revert all field overlays to their current configured text (placeholders if fresh).
-        for (const fieldId in fields) {
-            const fieldConfig = fields[fieldId];
-            if (fieldConfig.type === 'photo') {
-                const photoFieldElement = document.getElementById(fieldId);
-                if (photoFieldElement) photoFieldElement.textContent = "Photo Area";
-            } else {
-                fieldManager.updateFieldOverlayText(fieldId, fieldConfig.text);
-            }
-        }
-    }
-
     editLayoutButton.style.display = 'none';
-    // downloadPreviewButton.disabled = false; // Should already be enabled if editLayoutButton is visible
-    // downloadAllButton related display logic is handled by generateButton handler.
-
-    // Ensure font controls are correctly enabled/disabled based on focused field
-    const currentFocusedFieldElement = document.querySelector('.field.focused');
-    if (currentFocusedFieldElement) {
-        // Trigger the focus event handler to update controls
-        const focusEvent = new CustomEvent('field:focused', {
-            detail: {
-                id: currentFocusedFieldElement.id,
-                type: currentFocusedFieldElement.dataset.type
-            }
-        });
-        fieldManager.fieldLayer.dispatchEvent(focusEvent);
-    } else {
-        fontFamilySelect.disabled = true;
-        fontSizeInput.disabled = true;
+    
+    // Update overlays with generated content if available
+    if (lastGeneratedData && lastGeneratedData.text) {
+        updateOverlaysWithGeneratedContent(lastGeneratedData.text);
     }
+    
+    // Apply generated mode styling to all fields
+    Object.keys(fields).forEach(fieldId => {
+        const fieldElement = document.getElementById(fieldId);
+        if (fieldElement) {
+            fieldElement.classList.add('generated-mode');
+        }
+    });
+    
+    // Show only template on canvas (no generated text)
+    // The text will be visible only in the overlay fields
+    redrawCanvasWithTemplate();
 });
 
 downloadAllButton.addEventListener('click', () => {
