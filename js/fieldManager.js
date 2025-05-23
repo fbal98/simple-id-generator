@@ -104,14 +104,19 @@ export function addField(type, placeholderText = 'Text Field') {
     // Default font styles for text fields
     field.style.fontFamily = 'Arial';
     field.style.fontSize = '16px';
+    field.style.padding = '2px 4px'; // Tighter padding for text fields
     field.style.width = 'auto';
     field.style.height = 'auto';
+    // Prevent text wrapping to get true single-line width
+    field.style.whiteSpace = 'nowrap';
     // Force reflow if needed, then get dimensions
     // Adding to DOM above should be enough for offsetWidth/Height
     let initialWidth = field.offsetWidth;
     let initialHeight = field.offsetHeight;
     field.style.width = `${Math.max(MIN_WIDTH, initialWidth)}px`;
     field.style.height = `${Math.max(MIN_HEIGHT, initialHeight)}px`;
+    // Allow text wrapping again after sizing
+    field.style.whiteSpace = 'normal';
   }
   
   fields[id] = field;
@@ -284,11 +289,19 @@ export function updateFieldOverlayText(fieldId, newText) {
             fieldElement.textContent = '';
         } else {
             fieldElement.textContent = newText;
-            // Adjust height for auto-sized text fields
+            // Temporarily prevent wrapping and remove padding to measure true text width
+            const originalPadding = fieldElement.style.padding;
+            fieldElement.style.whiteSpace = 'nowrap';
+            fieldElement.style.padding = '2px 4px'; // Minimal padding for tight fit
+            fieldElement.style.width = 'auto';
             fieldElement.style.height = 'auto';
-            // Force reflow to get new auto height
+            // Force reflow to get new dimensions
+            let autoWidth = fieldElement.offsetWidth;
             let autoHeight = fieldElement.offsetHeight;
+            fieldElement.style.width = `${Math.max(MIN_WIDTH, autoWidth)}px`;
             fieldElement.style.height = `${Math.max(MIN_HEIGHT, autoHeight)}px`;
+            // Re-enable text wrapping
+            fieldElement.style.whiteSpace = 'normal';
         }
         // dispatchFieldUpdate(fieldElement); // Dispatch update so app.js can sync if needed (e.g. fields[id].text)
                                           // This is now implicitly handled as app.js calls this, then if user moves/resizes,
