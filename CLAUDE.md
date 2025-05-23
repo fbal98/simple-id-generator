@@ -28,7 +28,7 @@ The application will be available at http://localhost:3000
 The project includes comprehensive E2E tests using Playwright with **offline-first testing** approach:
 
 ```bash
-# Install test dependencies
+# Install test dependencies (required before first test run)
 bun run test:install
 
 # Quick smoke test (7 tests, ~3s) - Fastest for development
@@ -51,6 +51,15 @@ bun run test:webkit
 # Debug mode for test development
 bun run test:debug
 bun run test:ui
+
+# Run specific test file
+playwright test tests/template-upload.spec.js
+
+# Run tests matching pattern
+playwright test -g "should upload template image"
+
+# Show test report after run
+bun run test:report
 ```
 
 **Offline Testing Features:**
@@ -160,3 +169,13 @@ The project uses a multi-layered testing approach:
 - Browser launch optimizations with security flags
 - Parallel test execution with configurable workers
 - Dot reporter for minimal output during fast runs
+
+## Field Overlay Implementation Details
+
+The field overlay system uses a draggable/resizable design pattern:
+
+1. **Field Creation**: Fields auto-size to fit their content using `whiteSpace: nowrap` measurement
+2. **Text Fields**: Use minimal padding (2px 4px) for tight visual fit
+3. **Generated Mode**: Fields get `.generated-mode` class for subtle styling during ID generation
+4. **Resize Behavior**: Text fields auto-adjust height when width changes
+5. **Canvas Rendering**: Single-line text rendering without wrapping, scaled to fit field dimensions

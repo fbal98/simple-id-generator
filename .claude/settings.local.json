@@ -16,7 +16,10 @@
       "Bash(grep:*)",
       "Bash(timeout:*)",
       "Bash(bun start)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(-print)",
+      "Bash(ls:*)"
     ],
     "deny": []
   }
