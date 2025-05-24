@@ -31,6 +31,52 @@ bun start
 ```
 The server will start on http://localhost:3000. Open this URL in your browser.
 
+## Testing
+
+This project includes comprehensive end-to-end tests using Playwright. Tests cover all major user journeys including template upload, field management, ID generation, and downloads.
+
+### Running Tests
+
+```bash
+# Install Playwright browsers (first time only)
+bun playwright install
+
+# Run all tests
+bun run test
+
+# Run tests with UI mode (interactive)
+bun run test:ui
+
+# Run tests in headed mode (see browser)
+bun run test:headed
+
+# Debug tests
+bun run test:debug
+
+# Run specific test suite
+bunx playwright test tests/e2e/template-upload.spec.js
+```
+
+### Test Coverage
+
+The test suite includes 46 tests across 5 test files:
+
+- **Template Upload** (5 tests): Upload validation, error handling, template replacement
+- **Field Management** (12 tests): Adding all field types, positioning, resizing, edge switching
+- **ID Generation** (10 tests): Single/batch generation, progress tracking, API mocking
+- **Output Validation** (10 tests): Visual regression testing, screenshot comparison
+- **Download Functionality** (9 tests): Preview downloads, ZIP generation, file integrity
+
+### Visual Regression Testing
+
+Tests automatically capture screenshots and compare against baselines. To update baselines:
+
+```bash
+bunx playwright test --update-snapshots
+```
+
+See `/tests/README.md` for detailed testing documentation.
+
 
 ## Usage
 1. In the **Controls** panel (left), upload your ID template image.
@@ -55,17 +101,39 @@ The server will start on http://localhost:3000. Open this URL in your browser.
 ├── index.html                    # Main HTML file
 ├── server.js                     # Bun server for static files and proxying AI face fetch
 ├── package.json                  # Project metadata and scripts
+├── playwright.config.js          # Playwright test configuration
+├── CLAUDE.md                     # AI assistant guidance file
+├── TESTING_PLAN.md              # Test implementation plan and checklist
 ├── styles/
 │   └── main.css                  # Stylesheet
-└── js/
-    ├── app.js                    # Front-end application logic
-    ├── fieldManager.js           # Draggable/resizable field manager
-    └── dataGenerator.js          # Random data generator functions
+├── js/
+│   ├── app.js                    # Front-end application logic
+│   ├── fieldManager.js           # Draggable/resizable field manager
+│   ├── dataGenerator.js          # Random data generator functions
+│   ├── config.js                 # Application configuration
+│   ├── idGenerator.js            # ID generation logic
+│   ├── renderer.js               # Canvas rendering
+│   ├── state.js                  # Application state management
+│   ├── uiController.js           # UI interaction handling
+│   └── exporter.js               # Export functionality
+└── tests/
+    ├── README.md                 # Testing documentation
+    ├── e2e/                      # End-to-end test specs
+    │   ├── template-upload.spec.js
+    │   ├── field-management.spec.js
+    │   ├── id-generation.spec.js
+    │   ├── output-validation.spec.js
+    │   └── download.spec.js
+    ├── fixtures/                 # Test assets
+    │   └── template_id.JPEG
+    └── helpers/                  # Test utilities
+        └── test-utils.js
 ```
 
 ## Configuration
-- **PORT**: Default is 3000. Modify the `PORT` constant in `server.js` to change.
+- **PORT**: Default is 3000. Can be overridden with `PORT` environment variable.
 - **API Proxy**: The `/api/face` endpoint in `server.js` proxies to https://thispersondoesnotexist.com/. Customize as needed.
+- **Test Port**: Tests run on port 3001 to avoid conflicts with development server.
 
 ## Contributing
 Contributions are welcome! Please fork the repository, create a branch for your feature or fix, and submit a pull request.

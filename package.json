@@ -1,13 +1,20 @@
 {
   "name": "simple-id-generator",
   "version": "1.0.0",
-  "description": "A simple ID generator tool",
+  "description": "A simple ID generator tool with comprehensive E2E testing",
   "main": "index.html",
   "scripts": {
-    "start": "bun server.js"
+    "start": "bun server.js",
+    "test": "bunx playwright test",
+    "test:ui": "bunx playwright test --ui",
+    "test:headed": "bunx playwright test --headed",
+    "test:debug": "bunx playwright test --debug",
+    "test:update-snapshots": "bunx playwright test --update-snapshots"
   },
+  "keywords": ["id-generator", "canvas", "playwright", "e2e-testing"],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@playwright/test": "^1.52.0"
   }
 }

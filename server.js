@@ -1,7 +1,7 @@
 // server.js - Bun proxy server and static file server
 // Run with: bun server.js or bun run start
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 import path from 'path'; // Using ES module import for path
 import { existsSync } from 'fs'; // To check if file exists before serving
 
