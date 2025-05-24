@@ -18,7 +18,8 @@ export class UIController extends EventTarget {
       hasGeneratedContent: false,
       isGenerating: false,
       isInEditMode: false,
-      selectedFieldId: null
+      selectedFieldId: null,
+      generatedIdCount: 0
     };
   }
 
@@ -61,32 +62,32 @@ export class UIController extends EventTarget {
   updateProgress(progressData) {
     const { current, total, phase, visible = true } = progressData;
     
-    if (!this.elements.progressWrapper) return;
+    if (!this.elements.PROGRESS_WRAPPER) return;
     
     if (visible && total > 0) {
-      this.elements.progressWrapper.style.display = 'block';
+      this.elements.PROGRESS_WRAPPER.style.display = 'block';
       
-      if (this.elements.progressBar) {
-        this.elements.progressBar.max = total;
-        this.elements.progressBar.value = current || 0;
+      if (this.elements.PROGRESS_BAR) {
+        this.elements.PROGRESS_BAR.max = total;
+        this.elements.PROGRESS_BAR.value = current || 0;
       }
       
-      if (this.elements.progressText) {
+      if (this.elements.PROGRESS_TEXT) {
         let text = '';
         if (phase) {
           text = getMessage('PROGRESS_' + phase.toUpperCase(), { current, total });
         } else {
           text = `${current || 0} / ${total}`;
         }
-        this.elements.progressText.textContent = text;
+        this.elements.PROGRESS_TEXT.textContent = text;
       }
     } else {
-      this.elements.progressWrapper.style.display = 'none';
-      if (this.elements.progressBar) {
-        this.elements.progressBar.value = 0;
+      this.elements.PROGRESS_WRAPPER.style.display = 'none';
+      if (this.elements.PROGRESS_BAR) {
+        this.elements.PROGRESS_BAR.value = 0;
       }
-      if (this.elements.progressText) {
-        this.elements.progressText.textContent = '';
+      if (this.elements.PROGRESS_TEXT) {
+        this.elements.PROGRESS_TEXT.textContent = '';
       }
     }
   }
@@ -146,11 +147,11 @@ export class UIController extends EventTarget {
    */
   updateFontControls(fieldData) {
     if (fieldData) {
-      if (this.elements.fontFamilySelect) {
-        this.elements.fontFamilySelect.value = fieldData.fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY;
+      if (this.elements.FONT_FAMILY_SELECT) {
+        this.elements.FONT_FAMILY_SELECT.value = fieldData.fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY;
       }
-      if (this.elements.fontSizeInput) {
-        this.elements.fontSizeInput.value = fieldData.fontSize || CONFIG.FIELDS.DEFAULT_FONT_SIZE;
+      if (this.elements.FONT_SIZE_INPUT) {
+        this.elements.FONT_SIZE_INPUT.value = fieldData.fontSize || CONFIG.FIELDS.DEFAULT_FONT_SIZE;
       }
     }
   }
@@ -323,8 +324,10 @@ export class UIController extends EventTarget {
   _refreshUI(previousState) {
     const state = this.uiState;
     
-    // Update generation button - always enabled unless generating
-    this.setElementEnabled('GENERATE_BUTTON', !state.isGenerating);
+    // Update generation button - enabled only when template and fields exist
+    this.setElementEnabled('GENERATE_BUTTON', 
+      state.hasTemplate && state.hasFields && !state.isGenerating
+    );
 
     if (state.isGenerating) {
       this.setButtonText('GENERATE_BUTTON', 'Generating...');
@@ -336,11 +339,11 @@ export class UIController extends EventTarget {
     this.setElementEnabled('DOWNLOAD_PREVIEW_BUTTON', state.hasGeneratedContent);
     
     const jsZipAvailable = typeof window.JSZip !== 'undefined';
-    if (state.hasGeneratedContent && jsZipAvailable) {
-      this.setElementVisibility('DOWNLOAD_ALL_BUTTON', true);
-    } else {
-      this.setElementVisibility('DOWNLOAD_ALL_BUTTON', false);
-    }
+    // Show download all button only if we have 2 or more IDs
+    const shouldShowDownloadAll = state.generatedIdCount >= 2 && jsZipAvailable;
+    this.setElementEnabled('DOWNLOAD_ALL_BUTTON', shouldShowDownloadAll);
+    // Only show the button when we have multiple IDs
+    this.setElementVisibility('DOWNLOAD_ALL_BUTTON', shouldShowDownloadAll);
 
     // Update edit layout button
     this.setElementVisibility('EDIT_LAYOUT_BUTTON', 

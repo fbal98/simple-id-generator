@@ -90,7 +90,7 @@ export const CONFIG = Object.freeze({
       PNG: 'image/png',
       JPEG: 'image/jpeg'
     },
-    ZIP_FILENAME: 'generated-ids.zip'
+    ZIP_FILENAME: 'generated_ids.zip'
   },
 
   // Generation Configuration

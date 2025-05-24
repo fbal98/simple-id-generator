@@ -231,9 +231,7 @@ export class FieldManager extends EventTarget {
    */
   hideAllFields() {
     for (const fieldElement of this._fields.values()) {
-      fieldElement.style.visibility = 'hidden';
-      fieldElement.style.opacity = '0';
-      fieldElement.style.transition = 'opacity 0.2s ease';
+      fieldElement.style.display = 'none';
     }
   }
 
@@ -242,9 +240,7 @@ export class FieldManager extends EventTarget {
    */
   showAllFields() {
     for (const fieldElement of this._fields.values()) {
-      fieldElement.style.visibility = 'visible';
-      fieldElement.style.opacity = '1';
-      fieldElement.style.transition = 'opacity 0.2s ease';
+      fieldElement.style.display = '';
     }
   }
 

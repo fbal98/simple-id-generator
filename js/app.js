@@ -253,7 +253,7 @@ class SimpleIDGeneratorApp {
   _handleDownloadPreview() {
     const generatedIds = appState.generatedIds;
     if (generatedIds.length === 0) {
-      uiController.showError('No IDs generated yet');
+      alert('No ID generated yet to download. Please generate IDs first.');
       return;
     }
 
@@ -261,7 +261,7 @@ class SimpleIDGeneratorApp {
       exporter.exportSinglePNG(generatedIds[0]);
     } catch (error) {
       console.error('Download error:', error);
-      uiController.showError('Failed to download preview');
+      alert('Failed to download preview');
     }
   }
 
@@ -440,10 +440,12 @@ class SimpleIDGeneratorApp {
     // Handle both direct calls and state change events
     const ids = detail.ids || appState.generatedIds || [];
     const hasContent = detail.hasContent !== undefined ? detail.hasContent : ids.length > 0;
+    const idCount = detail.count !== undefined ? detail.count : ids.length;
     
     uiController.updateState({ 
       hasGeneratedContent: hasContent,
-      isInEditMode: false
+      isInEditMode: false,
+      generatedIdCount: idCount
     });
     
     if (ids.length > 0) {
