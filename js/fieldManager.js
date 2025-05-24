@@ -408,8 +408,8 @@ export class FieldManager extends EventTarget {
         fieldElement.style.fontSize
       );
       
-      // Use consistent padding that matches canvas rendering
-      const horizontalPadding = 4; // 2px padding on each side
+      // Use consistent padding that matches canvas rendering (2px each side)
+      const horizontalPadding = 4; // 2px padding on each side = 4px total
       fieldElement.style.width = `${Math.max(CONFIG.FIELDS.MIN_WIDTH, measuredSize.width + horizontalPadding)}px`;
       fieldElement.style.height = `${Math.max(CONFIG.FIELDS.MIN_HEIGHT, measuredSize.height)}px`;
       
@@ -630,8 +630,8 @@ export class FieldManager extends EventTarget {
       fieldElement.style.fontSize || `${CONFIG.FIELDS.DEFAULT_FONT_SIZE}px`
     );
     
-    // Use consistent padding that matches canvas rendering
-    const horizontalPadding = 4; // 2px padding on each side
+    // Use consistent padding that matches canvas rendering (2px each side)
+    const horizontalPadding = 4; // 2px padding on each side = 4px total
     const newWidth = Math.max(CONFIG.FIELDS.MIN_WIDTH, measuredSize.width + horizontalPadding);
     const newHeight = Math.max(CONFIG.FIELDS.MIN_HEIGHT, measuredSize.height);
     
@@ -718,7 +718,7 @@ export class FieldManager extends EventTarget {
     measureElement.style.whiteSpace = 'nowrap';
     measureElement.style.fontFamily = fontFamily;
     measureElement.style.fontSize = fontSize;
-    measureElement.style.padding = CONFIG.FIELDS.TEXT_PADDING;
+    measureElement.style.padding = '0'; // Don't include padding in measurement
     measureElement.textContent = text;
     
     document.body.appendChild(measureElement);

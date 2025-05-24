@@ -554,12 +554,13 @@ hr {
     position: absolute;
     background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--accent-indigo-light) 100%);
     border: 2px solid var(--primary-color-light);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: 2px;
     cursor: move;
-    font-size: 0.8125rem;
+    font-size: 16px; /* Match CONFIG.FIELDS.DEFAULT_FONT_SIZE */
+    font-family: Arial; /* Match CONFIG.FIELDS.DEFAULT_FONT_FAMILY exactly */
     pointer-events: auto;
-    color: var(--primary-color-dark);
-    font-weight: 500;
+    color: black; /* Match canvas text color */
+    font-weight: normal; /* Match canvas text weight */
     user-select: none;
     border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.1);
@@ -592,8 +593,8 @@ hr {
     word-break: normal;
     min-height: 32px;
     display: flex;
-    align-items: center;
-    line-height: 1.2;
+    align-items: flex-start; /* Match canvas textBaseline: 'top' */
+    line-height: 1; /* Prevent extra line spacing that differs from canvas */
 }
 
 .field[data-type="photo"] {
@@ -877,6 +878,7 @@ select,
     border-right: 2px solid var(--primary-color-light);
     text-align: left;
     justify-content: flex-start;
+    padding: 2px; /* Standard padding matching canvas */
 }
 
 .field.label-edge-right {
@@ -884,6 +886,7 @@ select,
     border-left: 2px solid var(--primary-color-light);
     text-align: right;
     justify-content: flex-end;
+    padding: 2px; /* Standard padding matching canvas */
 }
 
 .field.label-edge-top {
@@ -892,7 +895,10 @@ select,
     text-align: center;
     justify-content: center;
     align-items: flex-start;
-    padding-top: 12px;
+    padding-top: 12px; /* Extra padding for top label - matches canvas paddingY * 6 */
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-bottom: 2px;
 }
 
 .field.label-edge-bottom {
@@ -901,7 +907,10 @@ select,
     text-align: center;
     justify-content: center;
     align-items: flex-end;
-    padding-bottom: 12px;
+    padding-bottom: 12px; /* Extra padding for bottom label - matches canvas paddingY * 6 */
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-top: 2px;
 }
 
 /* Hover effect on edges */
