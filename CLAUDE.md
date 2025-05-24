@@ -105,3 +105,34 @@ The field overlay system uses a draggable/resizable design pattern with WYSIWYG 
 6. **Resize Behavior**: Text fields auto-adjust height when width changes, position adjusts based on label edge
 7. **Canvas Rendering**: Single-line text rendering with alignment matching overlay field positioning
 8. **WYSIWYG Design**: Overlay fields precisely match the final rendered output positioning and alignment
+
+## Testing
+
+### Running Tests
+```bash
+# Run all E2E tests
+bun run test
+
+# Run specific test suite
+bunx playwright test tests/e2e/template-upload.spec.js
+
+# Run with UI mode
+bun run test:ui
+
+# Update visual regression baselines
+bunx playwright test --update-snapshots
+```
+
+### Test Structure
+- **Template Upload**: Tests file upload, validation, and display
+- **Field Management**: Tests field addition, positioning, and properties
+- **ID Generation**: Tests single/batch generation with mocked APIs
+- **Output Validation**: Tests visual regression and content validation
+- **Downloads**: Tests preview and ZIP download functionality
+
+### Key Testing Notes
+- Tests run on port 3001 (configured in playwright.config.js)
+- Face API is mocked for consistent results
+- Visual regression tests compare screenshots against baselines
+- Field selectors use pattern `[id^="field-{type}"]` where type is: name, dob, issueDate, expiry, civilNo, photo
+- Generated IDs are displayed on the main canvas (#idCanvas), not as separate elements

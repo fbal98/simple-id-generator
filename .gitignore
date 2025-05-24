@@ -1,3 +1,7 @@
 node_modules/
 playwright-report/
 test-results/
+.claude/
+bun.lockb
+TESTING_STATUS.md
+TESTING_PLAN.md
