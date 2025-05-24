@@ -19,7 +19,14 @@
       "Bash(curl:*)",
       "Bash(find:*)",
       "Bash(-print)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(playwright test:*)",
+      "Bash(rg:*)",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "Bash(sed:*)",
+      "mcp__puppeteer__puppeteer_click"
     ],
     "deny": []
   }

@@ -1,624 +1,477 @@
-import * as fieldManager from './fieldManager.js';
-import * as dataGenerator from './dataGenerator.js';
+// Main application orchestrator for Simple ID Generator
+// Coordinates all modules and handles the application lifecycle
 
-// DOM Elements
-const templateUpload = document.getElementById('templateUpload');
-const idCanvas = document.getElementById('idCanvas');
-const ctx = idCanvas.getContext('2d');
+import { CONFIG, getEventName } from './config.js';
+import { appState } from './state.js';
+import { canvasRenderer } from './renderer.js';
+import { idGenerator } from './idGenerator.js';
+import { exporter } from './exporter.js';
+import { fieldManager } from './fieldManager.js';
+import { uiController } from './uiController.js';
 
-const addNameFieldButton = document.getElementById('addNameField');
-const addDOBFieldButton = document.getElementById('addDOBField');
-const addIssueDateFieldButton = document.getElementById('addIssueDateField');
-const addExpiryDateFieldButton = document.getElementById('addExpiryDateField');
-const addCivilNoFieldButton = document.getElementById('addCivilNoField');
-const addPhotoFieldButton = document.getElementById('addPhotoField');
+class SimpleIDGeneratorApp {
+  constructor() {
+    this.isInitialized = false;
+    this.canvas = null;
+    this.canvasContext = null;
+  }
 
-const numIDsToGenerateInput = document.getElementById('numIDsToGenerate');
-const generateButton = document.getElementById('generateButton');
-const downloadPreviewButton = document.getElementById('downloadPreviewButton');
-const editLayoutButton = document.getElementById('editLayoutButton');
-const downloadAllButton = document.getElementById('downloadAllButton');
-const fontFamilySelect = document.getElementById('fontFamilySelect');
-const fontSizeInput = document.getElementById('fontSizeInput');
-const progressWrapper = document.getElementById('progressWrapper');
-const progressBar = document.getElementById('generationProgress');
-const progressText = document.getElementById('progressText');
+  /**
+   * Initialize the application
+   */
+  async initialize() {
+    try {
+      console.log('Initializing Simple ID Generator...');
+      
+      // Get canvas elements
+      this.canvas = document.getElementById(CONFIG.UI.ELEMENTS.ID_CANVAS);
+      if (!this.canvas) {
+        throw new Error('Canvas element not found');
+      }
+      this.canvasContext = this.canvas.getContext('2d');
 
-// Check if JSZip loaded from CDN
-const jszipAvailable = typeof window.JSZip !== 'undefined';
-
-// App State
-let templateImage = null;
-let fields = {}; // Stores configuration of added fields: { id: {type, x, y, width, height, text, fontFamily, fontSize} }
-let generatedIdObjects = []; // Stores { name: string, dataUrl: string } for generated IDs
-let selectedFieldId = null;
-let isInEditMode = false; // Track if we're in edit layout mode
-let lastGeneratedData = null; // Stores the most recent generated content
-let isContentGenerated = false; // Whether we have generated content to edit
-
-// Initialize field manager with the canvas
-fieldManager.initializeFieldManager(idCanvas);
-
-// Function to update preview with current field positions
-// This is no longer used in edit mode since we keep the canvas showing only the template
-function updatePreviewWithCurrentPositions() {
-    // This function is deprecated - we don't update canvas in edit mode
-    return;
-}
-
-// Debounced version to avoid excessive re-renders during dragging
-// This is no longer used since we don't update canvas in edit mode
-function debouncedUpdatePreview() {
-    // Deprecated - we don't update canvas in edit mode
-    return;
-}
-
-// Function to update overlay fields with generated content
-function updateOverlaysWithGeneratedContent(generatedTextData) {
-    if (!generatedTextData) return;
-    
-    // Update each field overlay with its corresponding generated content
-    Object.keys(fields).forEach(fieldId => {
-        const field = fields[fieldId];
-        if (field && field.type !== 'photo' && generatedTextData[fieldId]) {
-            // Update the overlay text with generated content
-            fieldManager.updateFieldOverlayText(fieldId, generatedTextData[fieldId]);
-            // Update the app state to reflect the new content
-            fields[fieldId].text = generatedTextData[fieldId];
-        } else if (field && field.type === 'photo') {
-            // For photo fields, clear any text and keep overlay minimal
-            fieldManager.updateFieldOverlayText(fieldId, '');
-            fields[fieldId].text = ''; // Clear text in app state too
-        }
-    });
-}
-
-// Function to reset overlays to placeholder text
-function resetOverlaysToPlaceholders() {
-    Object.keys(fields).forEach(fieldId => {
-        const field = fields[fieldId];
-        if (field) {
-            let placeholderText = '';
-            switch (field.type) {
-                case 'name':
-                    placeholderText = 'Full Name';
-                    break;
-                case 'dob':
-                case 'issueDate':
-                case 'expiryDate':
-                    placeholderText = 'YYYY-MM-DD';
-                    break;
-                case 'civilNo':
-                    placeholderText = 'Civil Number/ID';
-                    break;
-                case 'photo':
-                    placeholderText = 'Photo Area';
-                    break;
-                default:
-                    placeholderText = 'Text Field';
-            }
-            
-            // Update overlay text and app state
-            fieldManager.updateFieldOverlayText(fieldId, placeholderText);
-            fields[fieldId].text = placeholderText;
-            
-            // Remove generated mode styling
-            const fieldElement = document.getElementById(fieldId);
-            if (fieldElement) {
-                fieldElement.classList.remove('generated-mode');
-            }
-        }
-    });
-}
-
-// Event Listeners
-
-templateUpload.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            templateImage = new Image();
-            templateImage.onload = () => {
-                idCanvas.width = templateImage.width;
-                idCanvas.height = templateImage.height;
-                redrawCanvasWithTemplate();
-                fieldManager.updateFieldLayerPosition();
-                fieldManager.clearFields();
-                fields = {};
-                generatedIdObjects = [];
-                downloadAllButton.style.display = 'none';
-                editLayoutButton.style.display = 'none';
-                isInEditMode = false;
-                lastGeneratedData = null;
-                isContentGenerated = false;
-            };
-            templateImage.src = e.target.result;
-        };
-        reader.readAsDataURL(file);
+      // Initialize modules
+      console.log('Initializing UI Controller...');
+      uiController.initialize();
+      
+      console.log('Initializing Field Manager...');
+      fieldManager.initialize(this.canvas);
+      
+      // Set up event flow
+      console.log('Setting up event listeners...');
+      this._setupEventListeners();
+      
+      // Set initial canvas dimensions
+      console.log('Setting initial canvas dimensions...');
+      this._setInitialCanvasDimensions();
+      
+      // Render initial state
+      console.log('Rendering initial canvas state...');
+      this._renderCanvas();
+      
+      this.isInitialized = true;
+      console.log('Application initialized successfully');
+      
+    } catch (error) {
+      console.error('Failed to initialize application:', error);
+      uiController.showError(`Failed to initialize application: ${error.message}`);
     }
-});
+  }
 
-function addNewField(type, placeholderText) {
-    fieldManager.showAllFields();
-    if (!templateImage) {
+  /**
+   * Clean up and destroy the application
+   */
+  destroy() {
+    if (!this.isInitialized) return;
+    
+    try {
+      // Clean up modules
+      fieldManager.destroy();
+      uiController.destroy();
+      appState.reset();
+      
+      this.isInitialized = false;
+      console.log('Application destroyed');
+      
+    } catch (error) {
+      console.error('Error during application cleanup:', error);
+    }
+  }
+
+  // Private methods
+
+  _setupEventListeners() {
+    // UI Controller events
+    uiController.addEventListener('ui:template-loaded', (e) => {
+      this._handleTemplateLoaded(e.detail);
+    });
+
+    uiController.addEventListener('ui:add-field', (e) => {
+      this._handleAddField(e.detail);
+    });
+
+    uiController.addEventListener('ui:font-changed', (e) => {
+      this._handleFontChanged(e.detail);
+    });
+
+    uiController.addEventListener('ui:generate', (e) => {
+      this._handleGenerate(e.detail);
+    });
+
+    uiController.addEventListener('ui:download-preview', () => {
+      this._handleDownloadPreview();
+    });
+
+    uiController.addEventListener('ui:download-all', () => {
+      this._handleDownloadAll();
+    });
+
+    uiController.addEventListener('ui:edit-layout', () => {
+      this._handleEditLayout();
+    });
+
+    // App State events
+    appState.addEventListener(getEventName('TEMPLATE_LOADED'), (e) => {
+      this._onTemplateChanged(e.detail);
+    });
+
+    appState.addEventListener(getEventName('FIELD_ADDED'), (e) => {
+      this._onFieldsChanged(e.detail);
+    });
+
+    appState.addEventListener(getEventName('FIELD_REMOVED'), (e) => {
+      this._onFieldsChanged(e.detail);
+      // If fields were cleared, also clear the fieldManager
+      if (e.detail.cleared) {
+        fieldManager.clearFields();
+      }
+    });
+
+    appState.addEventListener(getEventName('GENERATION_COMPLETE'), (e) => {
+      this._onGenerationComplete(e.detail);
+    });
+
+    // Field Manager events - also listen to legacy event names
+    fieldManager.addEventListener(getEventName('FIELD_ADDED'), (e) => {
+      this._onFieldManagerUpdate(e.detail);
+    });
+    
+    // Listen to the legacy field:moved event as well
+    fieldManager.addEventListener('field:moved', (e) => {
+      this._onFieldManagerUpdate(e.detail);
+    });
+
+    fieldManager.addEventListener(getEventName('FIELD_UPDATED'), (e) => {
+      this._onFieldManagerUpdate(e.detail);
+    });
+
+    fieldManager.addEventListener(getEventName('FIELD_FOCUSED'), (e) => {
+      this._onFieldFocused(e.detail);
+    });
+    
+    // Also listen on fieldLayer for backward compatibility
+    if (fieldManager.fieldLayerElement) {
+      fieldManager.fieldLayerElement.addEventListener('field:moved', (e) => {
+        this._onFieldManagerUpdate(e.detail);
+      });
+    }
+
+    // ID Generator events
+    idGenerator.addEventListener('generation:progress', (e) => {
+      this._onGenerationProgress(e.detail);
+    });
+
+    idGenerator.addEventListener('generation:complete', (e) => {
+      this._onGenerationComplete(e.detail);
+    });
+
+    idGenerator.addEventListener('generation:error', (e) => {
+      this._onGenerationError(e.detail);
+    });
+
+    // Window events
+    window.addEventListener('resize', () => {
+      fieldManager.updatePosition();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      this.destroy();
+    });
+  }
+
+  _handleTemplateLoaded({ image }) {
+    try {
+      // Update canvas dimensions
+      canvasRenderer.setCanvasDimensions(this.canvas, image.width, image.height);
+      
+      // Update app state
+      appState.setTemplateImage(image);
+      
+      console.log(`Template loaded: ${image.width}x${image.height}`);
+      
+    } catch (error) {
+      console.error('Error handling template load:', error);
+      uiController.showError('Failed to load template image');
+    }
+  }
+
+  _handleAddField({ type }) {
+    try {
+      // Check if we have a template first
+      if (!appState.hasTemplate) {
         alert('Please upload an ID template image first.');
         return;
-    }
-    const fieldData = fieldManager.addField(type, placeholderText);
-    if (fieldData) {
-        fields[fieldData.id] = fieldData;
-        
-        // If we're in edit mode, apply the styling to the new field but keep placeholder text
-        if (isInEditMode) {
-            const fieldElement = document.getElementById(fieldData.id);
-            if (fieldElement) {
-                fieldElement.classList.add('generated-mode');
-                // New fields always start with placeholder text, even in edit mode
-            }
-        }
-    }
-}
-
-addNameFieldButton.addEventListener('click', () => addNewField('name', 'Full Name'));
-addDOBFieldButton.addEventListener('click', () => addNewField('dob', 'YYYY-MM-DD'));
-addIssueDateFieldButton.addEventListener('click', () => addNewField('issueDate', 'YYYY-MM-DD'));
-addExpiryDateFieldButton.addEventListener('click', () => addNewField('expiryDate', 'YYYY-MM-DD'));
-addCivilNoFieldButton.addEventListener('click', () => addNewField('civilNo', 'Civil Number/ID'));
-addPhotoFieldButton.addEventListener('click', () => addNewField('photo', 'Photo'));
-
-fieldManager.fieldLayer.addEventListener('field:moved', (event) => {
-    const { id, x, y, width, height, fontFamily, fontSize, text } = event.detail;
-    if (fields[id]) {
-        fields[id].x = x;
-        fields[id].y = y;
-        fields[id].width = width;
-        fields[id].height = height;
-        fields[id].text = text; // Update text in app state, reflects current overlay content
-        if (fontFamily) fields[id].fontFamily = fontFamily;
-        if (fontSize) fields[id].fontSize = fontSize;
-        
-        // In edit mode, don't update the canvas - keep it showing only the template
-        // The overlays will show the content
-    }
-});
-
-fieldManager.fieldLayer.addEventListener('field:focused', (event) => {
-    if (event.detail) {
-        selectedFieldId = event.detail.id;
-        const field = fields[selectedFieldId];
-        if (field && field.type !== 'photo') {
-            fontFamilySelect.value = field.fontFamily || 'Arial';
-            fontSizeInput.value = field.fontSize || 16;
-            fontFamilySelect.disabled = false;
-            fontSizeInput.disabled = false;
-        } else {
-            fontFamilySelect.disabled = true;
-            fontSizeInput.disabled = true;
-        }
-    } else {
-        selectedFieldId = null;
-        fontFamilySelect.disabled = true;
-        fontSizeInput.disabled = true;
-    }
-});
-
-fontFamilySelect.addEventListener('change', () => {
-    if (selectedFieldId && fields[selectedFieldId]) {
-        const val = fontFamilySelect.value;
-        fields[selectedFieldId].fontFamily = val;
-        const el = document.getElementById(selectedFieldId);
-        if (el) el.style.fontFamily = val;
-        
-        // In edit mode, don't update the canvas - keep it showing only the template
-    }
-});
-
-fontSizeInput.addEventListener('change', () => {
-    if (selectedFieldId && fields[selectedFieldId]) {
-        const size = parseInt(fontSizeInput.value, 10) || 16;
-        fields[selectedFieldId].fontSize = size;
-        const el = document.getElementById(selectedFieldId);
-        if (el) el.style.fontSize = `${size}px`;
-        
-        // In edit mode, don't update the canvas - keep it showing only the template
-    }
-});
-
-function redrawCanvasWithTemplate() {
-    if (!idCanvas || !ctx) return;
-    ctx.clearRect(0, 0, idCanvas.width, idCanvas.height);
-    if (templateImage) {
-        ctx.drawImage(templateImage, 0, 0, idCanvas.width, idCanvas.height);
-        idCanvas.classList.remove('empty-canvas');
-    } else {
-        ctx.fillStyle = '#f0f0f0';
-        ctx.fillRect(0, 0, idCanvas.width, idCanvas.height);
-        ctx.fillStyle = '#555';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = '18px Arial';
-        ctx.fillText('Upload a template image', idCanvas.width / 2, idCanvas.height / 2);
-        idCanvas.classList.add('empty-canvas');
-    }
-}
-
-async function fetchAIFace() {
-    try {
-        let imageData;
-        
-        // Use our local Bun server as a proxy
-        console.log('Using local Bun server as proxy for AI face');
-        
-        // Local server endpoint that handles CORS and proxies the request
-        const localProxyUrl = 'http://localhost:3000/api/face';
-        
-        // The server at /api/face is configured to not cache,
-        // so client-side cache busting (query params or cache option) is not strictly necessary here.
-        console.log('Fetching from:', localProxyUrl);
-        
-        const response = await fetch(localProxyUrl);
-        
-        if (!response.ok) {
-            let errorText = response.statusText;
-            try {
-                // Attempt to get more detailed error from proxy response body
-                const bodyText = await response.text();
-                if (bodyText) errorText += ` - ${bodyText}`;
-            } catch (e) {
-                // Ignore if can't read body
-            }
-            console.error(`Failed to fetch AI face via proxy: ${response.status} ${errorText}`);
-            throw new Error(`Failed to fetch AI face via proxy: ${response.status} ${errorText}`);
-        }
-        
-        const blob = await response.blob();
-        imageData = await new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result);
-            reader.onerror = () => {
-                console.error('FileReader error while reading AI face blob.');
-                reject(new Error('FileReader error reading AI face blob.'));
-            };
-            reader.readAsDataURL(blob);
-        });
-
-        if (!imageData) { // Should not happen if previous steps succeeded, but as a safeguard.
-            console.error('AI face imageData is null after successful fetch and read.');
-            return null;
-        }
-
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve(img);
-            img.onerror = (err) => {
-                console.error("Error loading AI Face data URL into Image object:", err);
-                reject(new Error('Failed to load AI face image data into Image object.'));
-            };
-            img.src = imageData;
-        });
-
+      }
+      
+      // Add field via field manager
+      const fieldConfig = fieldManager.addField(type);
+      
+      // Update app state
+      appState.addField(fieldConfig);
+      
     } catch (error) {
-        console.error('Error in fetchAIFace:', error.message);
-        // Don't alert - handle gracefully by returning null
-        return null; 
+      console.error('Error adding field:', error);
+      // If it's the initialization error, show the proper message
+      if (error.message.includes('not initialized')) {
+        alert('Please upload an ID template image first.');
+      } else {
+        uiController.showError('Failed to add field');
+      }
     }
-}
+  }
 
-function renderSingleIdToContext(targetCtx, baseTemplate, fieldLayouts, textDataById, photoDataById, scaleX = 1, scaleY = 1) {
-    targetCtx.clearRect(0, 0, targetCtx.canvas.width, targetCtx.canvas.height);
-    if (baseTemplate) {
-        targetCtx.drawImage(baseTemplate, 0, 0, targetCtx.canvas.width, targetCtx.canvas.height);
+  _handleFontChanged({ fontFamily, fontSize, type }) {
+    const selectedFieldId = appState.selectedFieldId;
+    if (!selectedFieldId) return;
+
+    try {
+      const updates = {};
+      if (type === 'family' && fontFamily) updates.fontFamily = fontFamily;
+      if (type === 'size' && fontSize) updates.fontSize = fontSize;
+      
+      appState.updateField(selectedFieldId, updates);
+      
+    } catch (error) {
+      console.error('Error updating font:', error);
     }
+  }
 
-    targetCtx.fillStyle = 'black';
-    targetCtx.textAlign = 'left';
-    targetCtx.textBaseline = 'top';
-
-    console.log("Rendering ID with fieldLayouts:", JSON.parse(JSON.stringify(fieldLayouts)));
-    console.log("Text data by ID:", JSON.parse(JSON.stringify(textDataById)));
-    console.log("Photo data by ID keys:", Object.keys(photoDataById));
-
-
-    for (const fieldKey in fieldLayouts) { // Use fieldKey to avoid conflict with global 'id' if any
-        const field = fieldLayouts[fieldKey];
-        console.log(`Rendering field: ID=${field.id}, Type=${field.type}, X=${field.x}, Y=${field.y}`);
-        const x = field.x * scaleX;
-        const y = field.y * scaleY;
-        const width = field.width * scaleX;
-        const height = field.height * scaleY;
-
-        if (field.type === 'photo') {
-            const photoImageObj = photoDataById[field.id];
-            console.log(`For field ID ${field.id} (type ${field.type}), photo object present: ${!!photoImageObj}`);
-            if (photoImageObj) {
-                try {
-                    targetCtx.drawImage(photoImageObj, x, y, width, height);
-                } catch (e) {
-                    console.error(`Error drawing photo for field ${field.id} (possibly CORS tainted):`, e);
-                    targetCtx.fillStyle = 'rgba(255,0,0,0.5)';
-                    targetCtx.fillRect(x, y, width, height);
-                    targetCtx.fillStyle = 'white';
-                    targetCtx.textAlign = 'center';
-                    targetCtx.textBaseline = 'middle';
-                    targetCtx.fillText('Photo Error', x + width / 2, y + height / 2);
-                    targetCtx.fillStyle = 'black'; // Reset
-                    targetCtx.textAlign = 'left'; // Reset
-                    targetCtx.textBaseline = 'top'; // Reset
-                }
-            } else {
-                targetCtx.strokeStyle = 'red';
-                targetCtx.lineWidth = 1;
-                targetCtx.strokeRect(x, y, width, height);
-                targetCtx.fillStyle = 'red';
-                targetCtx.textAlign = 'center';
-                targetCtx.textBaseline = 'middle';
-                targetCtx.fillText('No Photo Data', x + width / 2, y + height / 2);
-                targetCtx.fillStyle = 'black'; // Reset
-                targetCtx.textAlign = 'left'; // Reset
-                targetCtx.textBaseline = 'top'; // Reset
-            }
-        } else {
-            let textToDraw = textDataById[field.id] || `[${field.type}]`;
-            console.log(`For field ID ${field.id} (type ${field.type}), drawing text: "${textToDraw}"`);
-            const scaledFontSize = (field.fontSize || 16) * scaleY;
-            targetCtx.font = `${scaledFontSize}px ${field.fontFamily || 'Arial'}`;
-            // const lineHeight = scaledFontSize; // Not strictly needed for single line in this manner
-
-            const paddingX = 2 * scaleX; // Small horizontal padding from left edge
-            const paddingY = 2 * scaleY; // Small vertical padding from top edge
-            
-            // Draw text as a single line, no wrapping
-            targetCtx.fillText(String(textToDraw).trim(), x + paddingX, y + paddingY);
-        }
-    }
-}
-
-generateButton.addEventListener('click', async () => {
-    if (!templateImage) {
-        alert('Please upload a template image first.');
-        return;
-    }
-    if (Object.keys(fields).length === 0) {
-        alert('Please add some fields to the template.');
-        return;
-    }
-
-    const numIDs = parseInt(numIDsToGenerateInput.value) || 1;
-    fieldManager.hideAllFields(); // Ensure any visible overlays are hidden before generating
-    generateButton.disabled = true;
-    generateButton.textContent = 'Generating...';
-    generatedIdObjects = []; // Clear previous results
-    
-    // Exit edit mode if we're in it
-    isInEditMode = false;
-    if (progressWrapper) {
-        progressBar.max = numIDs;
-        progressBar.value = 0;
-        progressText.textContent = `0 / ${numIDs}`;
-        progressWrapper.style.display = 'block';
-    }
-
-    const idPromises = [];
-
-    for (let i = 0; i < numIDs; i++) {
-        idPromises.push((async () => {
-            const idInstanceData = { text: {}, photos: {} };
-            const photoPromises = [];
-
-            // Generate data for each field instance
-            for (const fieldIdKey in fields) {
-                const field = fields[fieldIdKey];
-                switch (field.type) {
-                    case 'name':
-                        idInstanceData.text[field.id] = dataGenerator.getRandomName();
-                        break;
-                    case 'dob':
-                        idInstanceData.text[field.id] = dataGenerator.getRandomDate(1970, 2004);
-                        break;
-                    case 'issueDate':
-                        idInstanceData.text[field.id] = dataGenerator.getRandomDate(2020, 2023);
-                        break;
-                    case 'expiryDate':
-                        idInstanceData.text[field.id] = dataGenerator.getRandomDate(2024, 2030);
-                        break;
-                    case 'civilNo':
-                        idInstanceData.text[field.id] = dataGenerator.getRandomCivilNumber();
-                        break;
-                    case 'photo':
-                        photoPromises.push(
-                            fetchAIFace()
-                                .then(img => {
-                                    idInstanceData.photos[field.id] = img;
-                                })
-                                .catch(e => {
-                                    console.error(`Failed to fetch AI face for field ${field.id} on ID ${i + 1}: ${e.message}`);
-                                    idInstanceData.photos[field.id] = null;
-                                })
-                        );
-                        break;
-                }
-            }
-
-            await Promise.all(photoPromises);
-
-            const offscreenCanvas = document.createElement('canvas');
-            offscreenCanvas.width = templateImage.width;
-            offscreenCanvas.height = templateImage.height;
-            const offscreenCtx = offscreenCanvas.getContext('2d');
-
-            // Calculate scale factors between displayed canvas and actual image size
-            const scaleX = templateImage.width / idCanvas.clientWidth;
-            const scaleY = templateImage.height / idCanvas.clientHeight;
-
-            renderSingleIdToContext(
-                offscreenCtx,
-                templateImage,
-                fields,
-                idInstanceData.text,
-                idInstanceData.photos,
-                scaleX,
-                scaleY
-            );
-
-            try {
-                const dataUrl = offscreenCanvas.toDataURL('image/png');
-                // Store instanceData along with name and dataUrl
-                generatedIdObjects[i] = {
-                    name: `id_${i + 1}.png`,
-                    dataUrl: dataUrl,
-                    instanceData: idInstanceData // Contains .text and .photos (Image objects)
-                };
-
-                if (i === 0) {
-                    // Store generated data for edit mode
-                    lastGeneratedData = idInstanceData;
-                    isContentGenerated = true;
-                    isInEditMode = false;
-                    
-                    const previewImage = new Image();
-                    previewImage.onload = () => {
-                        ctx.clearRect(0, 0, idCanvas.width, idCanvas.height);
-                        ctx.drawImage(previewImage, 0, 0);
-                        // Hide overlays in preview mode - only show the rendered ID
-                        fieldManager.hideAllFields();
-                    };
-                    previewImage.src = dataUrl;
-                }
-            } catch (e) {
-                console.error('Error generating data URL (possibly due to tainted canvas from CORS):', e);
-                alert('Error generating image. This might be due to CORS policy on the AI face image source. Check console for details.');
-                generatedIdObjects = [];
-            }
-
-            if (progressWrapper) {
-                progressBar.value += 1;
-                progressText.textContent = `${progressBar.value} / ${numIDs}`;
-            }
-        })());
-    }
-
-    await Promise.all(idPromises);
-
-    generateButton.disabled = false;
-    generateButton.textContent = 'Generate IDs';
-    if (progressWrapper) {
-        progressWrapper.style.display = 'none';
-        progressBar.value = 0;
-        progressText.textContent = '';
-    }
-
-    if (generatedIdObjects.length > 0) {
-        downloadPreviewButton.disabled = false;
-        editLayoutButton.style.display = 'inline-block';
-        fieldManager.showAllFields(); // Show fields again so user can continue editing
-        if (generatedIdObjects.length > 1 && jszipAvailable) {
-            downloadAllButton.style.display = 'inline-block'; // Or 'block' depending on layout
-        } else {
-            downloadAllButton.style.display = 'none';
-        }
-    } else {
-        downloadPreviewButton.disabled = true;
-        editLayoutButton.style.display = 'none';
-        downloadAllButton.style.display = 'none';
-        isInEditMode = false;
-        lastGeneratedData = null;
-        isContentGenerated = false;
-        redrawCanvasWithTemplate(); // Show blank template if generation failed
-    }
-});
-
-downloadPreviewButton.addEventListener('click', () => {
-    if (generatedIdObjects.length > 0) {
-        const firstId = generatedIdObjects[0];
-        const a = document.createElement('a');
-        a.href = firstId.dataUrl;
-        a.download = firstId.name;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-    } else {
-        alert('No ID generated yet to download. Please generate IDs first.');
-    }
-});
-
-editLayoutButton.addEventListener('click', () => {
-    // Enter edit mode
-    isInEditMode = true;
-    fieldManager.showAllFields();
-    editLayoutButton.style.display = 'none';
-    
-    // Update overlays with generated content if available
-    if (lastGeneratedData && lastGeneratedData.text) {
-        updateOverlaysWithGeneratedContent(lastGeneratedData.text);
+  _handleGenerate({ numIDsToGenerate }) {
+    if (!appState.hasTemplate) {
+      alert('Please upload a template image first.');
+      return;
     }
     
-    // Apply generated mode styling to all fields
-    Object.keys(fields).forEach(fieldId => {
-        const fieldElement = document.getElementById(fieldId);
-        if (fieldElement) {
-            fieldElement.classList.add('generated-mode');
+    if (!appState.hasFields) {
+      alert('Please add some fields to the template.');
+      return;
+    }
+
+    this._generateIDs(numIDsToGenerate);
+  }
+
+  _handleDownloadPreview() {
+    const generatedIds = appState.generatedIds;
+    if (generatedIds.length === 0) {
+      uiController.showError('No IDs generated yet');
+      return;
+    }
+
+    try {
+      exporter.exportSinglePNG(generatedIds[0]);
+    } catch (error) {
+      console.error('Download error:', error);
+      uiController.showError('Failed to download preview');
+    }
+  }
+
+  _handleDownloadAll() {
+    const generatedIds = appState.generatedIds;
+    if (generatedIds.length < 2) {
+      uiController.showError('Generate at least 2 IDs to download ZIP');
+      return;
+    }
+
+    try {
+      exporter.exportZIP(generatedIds, CONFIG.FILES.ZIP_FILENAME, (progress) => {
+        console.log('ZIP progress:', progress);
+      });
+    } catch (error) {
+      console.error('ZIP download error:', error);
+      uiController.showError('Failed to download ZIP file');
+    }
+  }
+
+  _handleEditLayout() {
+    try {
+      appState.setEditMode(true);
+      fieldManager.exitGeneratedMode();
+      fieldManager.showAllFields();
+      
+      // Update field overlays with generated content
+      const lastData = appState.lastGeneratedData;
+      if (lastData && lastData.text) {
+        this._updateFieldOverlaysWithData(lastData.text);
+      }
+      
+      // Show only template on canvas
+      this._renderCanvas();
+      
+    } catch (error) {
+      console.error('Error entering edit mode:', error);
+      uiController.showError('Failed to enter edit mode');
+    }
+  }
+
+  async _generateIDs(count) {
+    try {
+      // Update state
+      appState.setGenerationInProgress(true);
+      fieldManager.enterGeneratedMode();
+      fieldManager.hideAllFields();
+      
+      // Update UI
+      uiController.updateState({ isGenerating: true });
+      uiController.updateProgress({ current: 0, total: count, visible: true });
+      
+      // Generate IDs
+      const result = await idGenerator.generateIds(
+        appState.templateImage,
+        appState.fields,
+        count,
+        {
+          onProgress: (progress) => {
+            uiController.updateProgress(progress);
+          }
         }
+      );
+      
+      // Update state with results
+      appState.setGeneratedIds(result.ids);
+      if (result.ids.length > 0) {
+        appState.setLastGeneratedData(result.ids[0].instanceData);
+        
+        // Show first ID on canvas
+        this._renderGeneratedPreview(result.ids[0]);
+      }
+      
+      // Show success message with count
+      if (result.successful > 0) {
+        uiController.showSuccess(`Successfully generated ${result.successful} ID${result.successful > 1 ? 's' : ''}`);
+      }
+      
+      if (result.failed > 0) {
+        console.warn(`Failed to generate ${result.failed} IDs`);
+      }
+      
+    } catch (error) {
+      console.error('Generation error:', error);
+      let errorMessage = 'Failed to generate IDs';
+      if (error.message.includes('fetch')) {
+        errorMessage = 'Failed to fetch AI faces. Please check your internet connection.';
+      }
+      uiController.showError(errorMessage);
+      appState.clearGeneratedIds();
+    } finally {
+      appState.setGenerationInProgress(false);
+      uiController.updateState({ isGenerating: false });
+      uiController.updateProgress({ visible: false });
+      // Don't show fields here - they should remain hidden when showing generated IDs
+    }
+  }
+
+  _renderGeneratedPreview(idData) {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        canvasRenderer.clearCanvas(this.canvasContext);
+        this.canvasContext.drawImage(img, 0, 0);
+        // Fields should already be hidden and in generated mode
+      };
+      img.onerror = () => {
+        console.error('Failed to load generated ID image');
+        uiController.showError('Failed to display generated ID');
+      };
+      img.src = idData.dataUrl;
+    } catch (error) {
+      console.error('Error rendering preview:', error);
+      uiController.showError('Failed to display generated ID');
+    }
+  }
+
+  _updateFieldOverlaysWithData(textData) {
+    for (const [fieldId, text] of Object.entries(textData)) {
+      fieldManager.updateFieldText(fieldId, text);
+    }
+  }
+
+  _renderCanvas() {
+    canvasRenderer.renderTemplate(this.canvasContext, appState.templateImage, this.canvas);
+  }
+
+  _setInitialCanvasDimensions() {
+    if (!appState.hasTemplate) {
+      try {
+        canvasRenderer.setCanvasDimensions(this.canvas, CONFIG.CANVAS.DEFAULT_WIDTH, CONFIG.CANVAS.DEFAULT_HEIGHT);
+        this._renderCanvas();
+      } catch (error) {
+        console.error('Error setting initial canvas dimensions:', error);
+      }
+    }
+  }
+
+  // Event handlers for state changes
+  _onTemplateChanged({ hasTemplate }) {
+    uiController.updateState({ hasTemplate });
+    this._renderCanvas();
+    fieldManager.updatePosition();
+  }
+
+  _onFieldsChanged({ totalFields }) {
+    uiController.updateState({ hasFields: totalFields > 0 });
+  }
+
+  _onFieldManagerUpdate(fieldConfig) {
+    try {
+      appState.updateField(fieldConfig.id, fieldConfig);
+    } catch (error) {
+      // Field might not exist in state yet
+      console.debug('Field update ignored:', error.message);
+    }
+  }
+
+  _onFieldFocused({ fieldId }) {
+    appState.setSelectedField(fieldId);
+    
+    // Update UI font controls
+    if (fieldId) {
+      const field = appState.getField(fieldId);
+      if (field) {
+        uiController.updateFontControls(field);
+      }
+    }
+  }
+
+  _onGenerationProgress(progress) {
+    uiController.updateProgress(progress);
+  }
+
+  _onGenerationComplete(detail = {}) {
+    // Handle both direct calls and state change events
+    const ids = detail.ids || appState.generatedIds || [];
+    const hasContent = detail.hasContent !== undefined ? detail.hasContent : ids.length > 0;
+    
+    uiController.updateState({ 
+      hasGeneratedContent: hasContent,
+      isInEditMode: false
     });
     
-    // Show only template on canvas (no generated text)
-    // The text will be visible only in the overlay fields
-    redrawCanvasWithTemplate();
-});
-
-downloadAllButton.addEventListener('click', () => {
-    if (generatedIdObjects.length > 1) {
-        if (typeof window.JSZip === 'undefined') {
-            alert('JSZip library failed to load. Unable to generate ZIP file.');
-            return;
-        }
-        const zip = new JSZip();
-        generatedIdObjects.forEach(idObj => {
-            // JSZip needs the base64 part of the data URL
-            const base64Data = idObj.dataUrl.split(',')[1];
-            zip.file(idObj.name, base64Data, { base64: true });
-        });
-        zip.generateAsync({ type: 'blob' })
-            .then(function (content) {
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(content);
-                a.download = 'generated_ids.zip';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(a.href);
-            });
-    } else {
-        alert('Generate at least two IDs to download a ZIP.');
+    if (ids.length > 0) {
+      uiController.showSuccess(`Generated ${ids.length} IDs successfully`);
     }
-});
+  }
 
-// Initial setup
-window.addEventListener('DOMContentLoaded', () => {
-    if (!templateImage) {
-        idCanvas.width = 600;
-        idCanvas.height = 380;
-        redrawCanvasWithTemplate();
-        fieldManager.updateFieldLayerPosition();
-    }
-    downloadPreviewButton.disabled = true;
-    downloadAllButton.style.display = 'none';
-    editLayoutButton.style.display = 'none';
-    fontFamilySelect.disabled = true;
-    fontSizeInput.disabled = true;
+  _onGenerationError({ error }) {
+    uiController.showError(`Generation failed: ${error}`);
+    uiController.updateState({ 
+      hasGeneratedContent: false,
+      isGenerating: false 
+    });
+  }
+}
 
-    if (!jszipAvailable) {
-        downloadAllButton.disabled = true;
-        console.warn('JSZip failed to load. Download All feature disabled.');
-    }
-});
+// Create and initialize the application
+const app = new SimpleIDGeneratorApp();
 
-// For easier debugging
-window.appState = {
-    getFields: () => fields,
-    getTemplate: () => templateImage,
-    getGeneratedIds: () => generatedIdObjects,
-    redraw: redrawCanvasWithTemplate,
-};
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => app.initialize());
+} else {
+  app.initialize();
+}
 
-console.log('App loaded.', jszipAvailable ? 'JSZip detected.' : 'JSZip NOT detected.');
+// Export for debugging/testing
+window.app = app; // Expose globally for tests
+window.appState = appState; // Expose state for tests
+window.fieldManager = fieldManager; // Expose field manager for tests
+export default app;

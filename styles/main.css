@@ -557,9 +557,9 @@ hr {
     padding: var(--spacing-xs) var(--spacing-sm);
     cursor: move;
     font-size: 0.8125rem;
+    pointer-events: auto;
     color: var(--primary-color-dark);
     font-weight: 500;
-    pointer-events: all;
     user-select: none;
     border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.1);
@@ -585,12 +585,7 @@ hr {
     }
 }
 
-/* Subtle styling for generated ID fields */
-.field.generated-mode:not([data-type="photo"]) {
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    box-shadow: none;
-}
+/* Subtle styling for generated ID fields - removed for consistency */
 
 .field:not([data-type="photo"]) {
     white-space: normal;
@@ -801,32 +796,115 @@ select,
 
 /* === Generated mode field styling === */
 .field.generated-mode {
-    background: rgba(59, 130, 246, 0.3);
-    backdrop-filter: none;
-    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    box-shadow: 0 1px 4px 0 rgba(59, 130, 246, 0.1);
 }
 
 .field.generated-mode:hover {
-    background: rgba(59, 130, 246, 0.4);
-    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.15);
 }
 
 .field.generated-mode.focused {
-    background: rgba(59, 130, 246, 0.5);
+    background: rgba(255, 255, 255, 0.95);
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color-light), 0 4px 12px 0 rgba(59, 130, 246, 0.2);
 }
 
 .field[data-type="photo"].generated-mode {
-    background: rgba(244, 63, 94, 0.3);
-    border-color: rgba(244, 63, 94, 0.5);
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(244, 63, 94, 0.3);
+    box-shadow: 0 1px 4px 0 rgba(244, 63, 94, 0.1);
 }
 
 .field[data-type="photo"].generated-mode:hover {
-    background: rgba(244, 63, 94, 0.4);
-    border-color: var(--danger-color);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(244, 63, 94, 0.5);
+    box-shadow: 0 2px 8px 0 rgba(244, 63, 94, 0.15);
 }
 
 .field[data-type="photo"].generated-mode.focused {
-    background: rgba(244, 63, 94, 0.5);
+    background: rgba(255, 255, 255, 0.95);
     border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px var(--danger-color-light), 0 4px 12px 0 rgba(244, 63, 94, 0.2);
+}
+
+/* === Field Edge Indicators === */
+.field-edge {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    cursor: pointer;
+    z-index: 5;
+    pointer-events: all;
+}
+
+.field-edge.edge-left {
+    left: 0;
+}
+
+.field-edge.edge-right {
+    right: 0;
+}
+
+/* Active border styling based on anchor side */
+.field.anchor-left {
+    border-left: 3px solid var(--primary-color);
+    border-right: 2px solid var(--primary-color-light);
+}
+
+.field.anchor-right {
+    border-right: 3px solid var(--primary-color);
+    border-left: 2px solid var(--primary-color-light);
+}
+
+/* Hover effect on edges */
+.field:not(.anchor-left) .field-edge.edge-left:hover ~ *,
+.field:not(.anchor-left):has(.field-edge.edge-left:hover) {
+    border-left-color: var(--primary-color);
+    border-left-width: 3px;
+}
+
+.field:not(.anchor-right) .field-edge.edge-right:hover ~ *,
+.field:not(.anchor-right):has(.field-edge.edge-right:hover) {
+    border-right-color: var(--primary-color);
+    border-right-width: 3px;
+}
+
+/* Visual feedback when hovering edges */
+.field .field-edge:hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background: linear-gradient(90deg, 
+        var(--primary-color-light) 0%, 
+        transparent 100%);
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.field .field-edge.edge-right:hover::before {
+    background: linear-gradient(-90deg, 
+        var(--primary-color-light) 0%, 
+        transparent 100%);
+}
+
+/* Hide edges on photo fields */
+.field[data-type="photo"] .field-edge {
+    display: none;
+}
+
+/* Animate border changes */
+.field {
+    transition: border-color var(--transition-fast), 
+                border-width var(--transition-fast),
+                box-shadow var(--transition-fast),
+                background var(--transition-fast),
+                transform var(--transition-fast);
 }
