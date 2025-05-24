@@ -1,336 +1,764 @@
-// Manages draggable fields over the canvas
-const fieldLayer = document.createElement('div');
-fieldLayer.id = 'fieldLayer';
+// Field Manager module for Simple ID Generator
+// Handles draggable/resizable field overlays with clean event-driven architecture
 
-let canvas = null;
-let canvasRect = null;
-let focusedField = null;
-const MIN_WIDTH = 20;
-const MIN_HEIGHT = 20;
+import { CONFIG, getEventName, getCSSClass } from './config.js';
 
-export function initializeFieldManager(canvasElement) {
-  canvas = canvasElement;
-  const canvasWrapper = document.getElementById('canvasWrapper');
-  if (canvasWrapper) {
-    canvasWrapper.appendChild(fieldLayer);
-    updateFieldLayerPosition();
-    window.addEventListener('resize', updateFieldLayerPosition);
-    document.addEventListener('click', handleDocumentClick, true); // Use capture to ensure it runs
-  } else {
-    console.error('Canvas wrapper not found for field layer.');
+export class FieldManager extends EventTarget {
+  constructor() {
+    super();
+    
+    // Private properties (using underscore convention for private)
+    this._canvas = null;
+    this._canvasRect = null;
+    this._fieldLayer = null;
+    this._fields = new Map();
+    this._focusedField = null;
+    this._fieldCounter = 0;
+    this._isInitialized = false;
+    
+    // Bind methods to preserve context
+    this._handleDocumentClick = this._handleDocumentClick.bind(this);
+    this._updateFieldLayerPosition = this._updateFieldLayerPosition.bind(this);
   }
-}
 
-function handleDocumentClick(event) {
-    // If the click is outside any field and not on a field control, remove focus.
+  /**
+   * Initialize the field manager with a canvas element
+   * @param {HTMLCanvasElement} canvasElement - Canvas to overlay fields on
+   */
+  initialize(canvasElement) {
+    if (this._isInitialized) {
+      console.warn('FieldManager already initialized');
+      return;
+    }
+
+    this._canvas = canvasElement;
+    const canvasWrapper = document.getElementById(CONFIG.UI.ELEMENTS.CANVAS_WRAPPER);
+    
+    if (!canvasWrapper) {
+      throw new Error('Canvas wrapper not found for field layer');
+    }
+
+    // Create and set up field layer
+    this._fieldLayer = document.createElement('div');
+    this._fieldLayer.id = CONFIG.UI.ELEMENTS.FIELD_LAYER;
+    this._fieldLayer.className = getCSSClass('FIELD_LAYER') || 'field-layer';
+    
+    canvasWrapper.appendChild(this._fieldLayer);
+    this._updateFieldLayerPosition();
+    
+    // Set up event listeners
+    window.addEventListener('resize', this._updateFieldLayerPosition);
+    document.addEventListener('click', this._handleDocumentClick, true);
+    
+    this._isInitialized = true;
+    this._emitEvent(getEventName('STATE_CHANGED'), { initialized: true });
+  }
+
+  /**
+   * Add a new field to the overlay
+   * @param {string} type - Field type from CONFIG.FIELDS.TYPES
+   * @param {Object} options - Field options
+   * @returns {Object} Field configuration
+   */
+  addField(type, options = {}) {
+    if (!this._isInitialized) {
+      throw new Error('FieldManager not initialized');
+    }
+
+    const {
+      text = this._getDefaultText(type),
+      x = CONFIG.FIELDS.POSITION_LEFT,
+      y = this._calculateDefaultPosition(),
+      fontFamily = CONFIG.FIELDS.DEFAULT_FONT_FAMILY,
+      fontSize = CONFIG.FIELDS.DEFAULT_FONT_SIZE
+    } = options;
+
+    const fieldId = `field-${type}-${this._fieldCounter++}`;
+    const fieldElement = this._createFieldElement(fieldId, type, text, fontFamily, fontSize);
+    
+    // Position the field
+    fieldElement.style.left = `${x}px`;
+    fieldElement.style.top = `${y}px`;
+    
+    this._fieldLayer.appendChild(fieldElement);
+    
+    // Configure field dimensions based on type
+    this._configureFieldDimensions(fieldElement, type);
+    
+    // Store field reference
+    this._fields.set(fieldId, fieldElement);
+    
+    // Set up field interactions
+    this._setupFieldInteractions(fieldElement);
+    
+    // Get final field configuration
+    const fieldConfig = this._getFieldConfiguration(fieldElement);
+    
+    // Emit field added event BEFORE focusing to ensure app state is updated
+    this._emitFieldEvent(getEventName('FIELD_ADDED'), fieldConfig);
+    
+    // Focus the new field after it's been added to app state
+    setTimeout(() => {
+      this.setFocusedField(fieldElement);
+    }, 0);
+    
+    return fieldConfig;
+  }
+
+  /**
+   * Remove a field from the overlay
+   * @param {string} fieldId - Field ID to remove
+   * @returns {boolean} Success status
+   */
+  removeField(fieldId) {
+    const fieldElement = this._fields.get(fieldId);
+    if (!fieldElement) {
+      return false;
+    }
+
+    // Clear focus if this field was focused
+    if (this._focusedField === fieldElement) {
+      this.setFocusedField(null);
+    }
+
+    // Remove from DOM and internal storage
+    fieldElement.remove();
+    this._fields.delete(fieldId);
+    
+    // Emit field removed event
+    this._emitFieldEvent(getEventName('FIELD_REMOVED'), { fieldId });
+    
+    return true;
+  }
+
+  /**
+   * Update field text content
+   * @param {string} fieldId - Field ID
+   * @param {string} newText - New text content
+   */
+  updateFieldText(fieldId, newText) {
+    const fieldElement = this._fields.get(fieldId);
+    if (!fieldElement) {
+      return;
+    }
+
+    const type = fieldElement.dataset.type;
+    
+    if (type === CONFIG.FIELDS.TYPES.PHOTO) {
+      // Photo fields should maintain their placeholder text
+      // Only clear text when actually displaying a photo
+      if (!fieldElement.classList.contains('has-photo')) {
+        const textNode = Array.from(fieldElement.childNodes)
+          .find(node => node.nodeType === Node.TEXT_NODE);
+        if (textNode) {
+          textNode.textContent = 'Photo Area';
+        } else {
+          const newTextNode = document.createTextNode('Photo Area');
+          fieldElement.insertBefore(newTextNode, fieldElement.firstChild);
+        }
+      }
+    } else {
+      this._updateTextFieldContent(fieldElement, newText);
+    }
+  }
+
+  /**
+   * Set focused field
+   * @param {HTMLElement|null} fieldElement - Field to focus or null to clear
+   */
+  setFocusedField(fieldElement) {
+    // Remove focus from previous field
+    if (this._focusedField && this._focusedField !== fieldElement) {
+      this._focusedField.classList.remove(getCSSClass('FIELD_FOCUSED'));
+    }
+
+    // Set new focused field
+    if (fieldElement) {
+      fieldElement.classList.add(getCSSClass('FIELD_FOCUSED'));
+    }
+
+    this._focusedField = fieldElement;
+    
+    // Emit focus event
+    const detail = fieldElement ? {
+      fieldId: fieldElement.id,
+      type: fieldElement.dataset.type
+    } : null;
+    
+    this._emitEvent(getEventName('FIELD_FOCUSED'), detail);
+  }
+
+  /**
+   * Get all field positions and configurations
+   * @returns {Object} Field configurations by ID
+   */
+  getFieldConfigurations() {
+    const configurations = {};
+    
+    for (const [fieldId, fieldElement] of this._fields) {
+      configurations[fieldId] = this._getFieldConfiguration(fieldElement);
+    }
+    
+    return configurations;
+  }
+
+  /**
+   * Clear all fields
+   */
+  clearFields() {
+    const fieldCount = this._fields.size;
+    
+    // Remove all field elements
+    for (const fieldElement of this._fields.values()) {
+      fieldElement.remove();
+    }
+    
+    // Clear internal state
+    this._fields.clear();
+    this._focusedField = null;
+    this._fieldCounter = 0;
+    
+    if (fieldCount > 0) {
+      this._emitEvent(getEventName('FIELD_REMOVED'), { 
+        cleared: true, 
+        count: fieldCount 
+      });
+    }
+  }
+
+  /**
+   * Hide all fields
+   */
+  hideAllFields() {
+    for (const fieldElement of this._fields.values()) {
+      fieldElement.style.display = 'none';
+    }
+  }
+
+  /**
+   * Show all fields
+   */
+  showAllFields() {
+    for (const fieldElement of this._fields.values()) {
+      fieldElement.style.display = '';
+    }
+  }
+
+  /**
+   * Enter generated mode - add styling for generation preview
+   */
+  enterGeneratedMode() {
+    for (const fieldElement of this._fields.values()) {
+      fieldElement.classList.add('generated-mode');
+    }
+  }
+
+  /**
+   * Exit generated mode - remove generation styling
+   */
+  exitGeneratedMode() {
+    for (const fieldElement of this._fields.values()) {
+      fieldElement.classList.remove('generated-mode');
+      // Reset photo fields to show placeholder text
+      if (fieldElement.dataset.type === CONFIG.FIELDS.TYPES.PHOTO) {
+        fieldElement.classList.remove('has-photo');
+        const textNode = Array.from(fieldElement.childNodes)
+          .find(node => node.nodeType === Node.TEXT_NODE);
+        if (textNode) {
+          textNode.textContent = 'Photo Area';
+        }
+      }
+    }
+  }
+
+  /**
+   * Get field count
+   * @returns {number} Number of fields
+   */
+  get fieldCount() {
+    return this._fields.size;
+  }
+
+  /**
+   * Get focused field ID
+   * @returns {string|null} Focused field ID
+   */
+  get focusedFieldId() {
+    return this._focusedField ? this._focusedField.id : null;
+  }
+
+  /**
+   * Get field layer element (for testing/debugging)
+   * @returns {HTMLElement|null} Field layer element
+   */
+  get fieldLayerElement() {
+    return this._fieldLayer;
+  }
+
+  /**
+   * Update field layer position (called on window resize)
+   */
+  updatePosition() {
+    this._updateFieldLayerPosition();
+  }
+
+  /**
+   * Clean up event listeners and resources
+   */
+  destroy() {
+    if (!this._isInitialized) {
+      return;
+    }
+
+    // Remove event listeners
+    window.removeEventListener('resize', this._updateFieldLayerPosition);
+    document.removeEventListener('click', this._handleDocumentClick, true);
+    
+    // Clear fields and DOM
+    this.clearFields();
+    if (this._fieldLayer && this._fieldLayer.parentNode) {
+      this._fieldLayer.parentNode.removeChild(this._fieldLayer);
+    }
+    
+    // Reset state
+    this._canvas = null;
+    this._fieldLayer = null;
+    this._isInitialized = false;
+    
+    this._emitEvent(getEventName('STATE_CHANGED'), { destroyed: true });
+  }
+
+  // Private methods
+
+  _updateFieldLayerPosition() {
+    if (!this._canvas || !this._fieldLayer || !this._fieldLayer.parentElement) {
+      return;
+    }
+
+    this._canvasRect = this._canvas.getBoundingClientRect();
+    const wrapperRect = this._fieldLayer.parentElement.getBoundingClientRect();
+
+    this._fieldLayer.style.position = 'absolute';
+    this._fieldLayer.style.left = `${this._canvasRect.left - wrapperRect.left}px`;
+    this._fieldLayer.style.top = `${this._canvasRect.top - wrapperRect.top}px`;
+    this._fieldLayer.style.width = `${this._canvasRect.width}px`;
+    this._fieldLayer.style.height = `${this._canvasRect.height}px`;
+    this._fieldLayer.style.pointerEvents = 'auto';
+  }
+
+  _handleDocumentClick(event) {
+    // Check if click is outside any field
     let target = event.target;
     let isFieldOrChild = false;
+    
     while (target && target !== document.body) {
-        if (target.classList && (target.classList.contains('field') || target.classList.contains('resize-handle'))) {
-            isFieldOrChild = true;
-            break;
-        }
-        target = target.parentNode;
+      if (target.classList && (
+        target.classList.contains(getCSSClass('FIELD')) ||
+        target.classList.contains(getCSSClass('RESIZE_HANDLE'))
+      )) {
+        isFieldOrChild = true;
+        break;
+      }
+      target = target.parentNode;
     }
 
-    if (!isFieldOrChild && focusedField) {
-        setFocusedField(null);
+    if (!isFieldOrChild && this._focusedField) {
+      this.setFocusedField(null);
     }
-}
+  }
 
+  _createFieldElement(fieldId, type, text, fontFamily, fontSize) {
+    const field = document.createElement('div');
+    field.className = getCSSClass('FIELD');
+    field.dataset.type = type;
+    field.id = fieldId;
+    field.dataset.labelEdge = 'left';
+    
+    // Create text node
+    const textNode = document.createTextNode(text);
+    field.appendChild(textNode);
+    
+    return field;
+  }
 
-function setFocusedField(fieldElement) {
-    if (focusedField && focusedField !== fieldElement) {
-        focusedField.classList.remove('focused');
+  _configureFieldDimensions(fieldElement, type) {
+    if (type === CONFIG.FIELDS.TYPES.PHOTO) {
+      // Photo field configuration
+      fieldElement.style.width = `${CONFIG.FIELDS.DEFAULT_WIDTH}px`;
+      fieldElement.style.height = `${CONFIG.FIELDS.DEFAULT_HEIGHT}px`;
+      
+      const textNode = Array.from(fieldElement.childNodes)
+        .find(node => node.nodeType === Node.TEXT_NODE);
+      if (textNode) {
+        textNode.textContent = 'Photo Area';
+      }
+    } else {
+      // Text field configuration
+      fieldElement.style.fontFamily = CONFIG.FIELDS.DEFAULT_FONT_FAMILY;
+      fieldElement.style.fontSize = `${CONFIG.FIELDS.DEFAULT_FONT_SIZE}px`;
+      fieldElement.style.padding = CONFIG.FIELDS.TEXT_PADDING;
+      fieldElement.style.whiteSpace = 'nowrap';
+      fieldElement.style.overflow = 'hidden';
+      fieldElement.style.textOverflow = 'ellipsis';
+      
+      // Auto-size based on content with proper measurement
+      const measuredSize = this._measureTextContent(
+        fieldElement.textContent, 
+        fieldElement.style.fontFamily,
+        fieldElement.style.fontSize
+      );
+      
+      // Use consistent padding that matches canvas rendering (2px each side)
+      const horizontalPadding = 4; // 2px padding on each side = 4px total
+      fieldElement.style.width = `${Math.max(CONFIG.FIELDS.MIN_WIDTH, measuredSize.width + horizontalPadding)}px`;
+      fieldElement.style.height = `${Math.max(CONFIG.FIELDS.MIN_HEIGHT, measuredSize.height)}px`;
+      
+      // Add edge elements for label edge selection
+      this._addEdgeElements(fieldElement);
     }
-    if (fieldElement) {
-        fieldElement.classList.add('focused');
-    }
-    focusedField = fieldElement;
-    const event = new CustomEvent('field:focused', {
-        detail: fieldElement
-            ? {
-                  id: fieldElement.id,
-                  type: fieldElement.dataset.type
-              }
-            : null
+  }
+
+  _addEdgeElements(fieldElement) {
+    const leftEdge = document.createElement('div');
+    leftEdge.className = 'field-edge edge-left';
+    fieldElement.appendChild(leftEdge);
+    
+    const rightEdge = document.createElement('div');
+    rightEdge.className = 'field-edge edge-right';
+    fieldElement.appendChild(rightEdge);
+    
+    const topEdge = document.createElement('div');
+    topEdge.className = 'field-edge edge-top';
+    fieldElement.appendChild(topEdge);
+    
+    const bottomEdge = document.createElement('div');
+    bottomEdge.className = 'field-edge edge-bottom';
+    fieldElement.appendChild(bottomEdge);
+    
+    // Set up edge click handlers
+    const edges = ['left', 'right', 'top', 'bottom'];
+    const edgeElements = { left: leftEdge, right: rightEdge, top: topEdge, bottom: bottomEdge };
+    
+    edges.forEach(edge => {
+      edgeElements[edge].addEventListener('click', (e) => {
+        e.stopPropagation();
+        fieldElement.dataset.labelEdge = edge;
+        
+        // Remove all label edge classes
+        edges.forEach(e => fieldElement.classList.remove(`label-edge-${e}`));
+        
+        // Add the current edge class
+        fieldElement.classList.add(`label-edge-${edge}`);
+        
+        this._dispatchFieldUpdate(fieldElement);
+      });
     });
-    fieldLayer.dispatchEvent(event);
-}
-
-export function updateFieldLayerPosition() {
-    if (!canvas || !fieldLayer.parentElement) return;
-    canvasRect = canvas.getBoundingClientRect();
-    const wrapperRect = fieldLayer.parentElement.getBoundingClientRect();
-
-    fieldLayer.style.position = 'absolute';
-    fieldLayer.style.left = `${canvasRect.left - wrapperRect.left}px`;
-    fieldLayer.style.top = `${canvasRect.top - wrapperRect.top}px`;
-    fieldLayer.style.width = `${canvasRect.width}px`;
-    fieldLayer.style.height = `${canvasRect.height}px`;
-    fieldLayer.style.pointerEvents = 'auto'; // Enable pointer events on fieldLayer for click-off
-}
-
-let fieldCounter = 0;
-const fields = {}; // Store field elements by id
-
-export function addField(type, placeholderText = 'Text Field') {
-  if (!canvas) {
-    console.error("Canvas not initialized for field manager.");
-    alert("Please upload a template image first.");
-    return null;
-  }
-  updateFieldLayerPosition();
-
-  const field = document.createElement('div');
-  const id = `field-${type}-${fieldCounter++}`;
-  field.className = 'field';
-  field.dataset.type = type;
-  field.id = id;
-  field.textContent = placeholderText;
-  
-  // Initial position
-  field.style.left = '10px';
-  const layerHeightForPositioning = fieldLayer.clientHeight > 0 ? fieldLayer.clientHeight : 300;
-  field.style.top = `${(Object.keys(fields).length * 25) % Math.max(25, layerHeightForPositioning - 25)}px`; // Stagger new fields
-
-  fieldLayer.appendChild(field); // Add to DOM to measure
-
-  if (type === 'photo') {
-    field.style.width = '100px';
-    field.style.height = '120px';
-    field.textContent = 'Photo Area';
-  } else { // Text field: auto-size
-    // Default font styles for text fields
-    field.style.fontFamily = 'Arial';
-    field.style.fontSize = '16px';
-    field.style.padding = '2px 4px'; // Tighter padding for text fields
-    field.style.width = 'auto';
-    field.style.height = 'auto';
-    // Prevent text wrapping to get true single-line width
-    field.style.whiteSpace = 'nowrap';
-    // Force reflow if needed, then get dimensions
-    // Adding to DOM above should be enough for offsetWidth/Height
-    let initialWidth = field.offsetWidth;
-    let initialHeight = field.offsetHeight;
-    field.style.width = `${Math.max(MIN_WIDTH, initialWidth)}px`;
-    field.style.height = `${Math.max(MIN_HEIGHT, initialHeight)}px`;
-    // Allow text wrapping again after sizing
-    field.style.whiteSpace = 'normal';
-  }
-  
-  fields[id] = field;
-  setFocusedField(field); // Focus new field
-
-  // Drag handling
-  let dragStartX, dragStartY, dragStartLeft, dragStartTop;
-  field.addEventListener('pointerdown', e => {
-    if (e.target.classList.contains('resize-handle')) return; // Don't drag if resize handle is clicked
-    e.stopPropagation();
-    setFocusedField(field);
-
-    dragStartX = e.clientX;
-    dragStartY = e.clientY;
-    dragStartLeft = field.offsetLeft;
-    dragStartTop = field.offsetTop;
-
-    field.classList.add('dragging'); // Disable transitions during drag
-    document.addEventListener('pointermove', onDragPointerMove);
-    document.addEventListener('pointerup', onDragPointerUp);
-  });
-
-  function onDragPointerMove(e) {
-    e.preventDefault();
-    let newLeft = dragStartLeft + e.clientX - dragStartX;
-    let newTop = dragStartTop + e.clientY - dragStartY;
-
-    // Constrain dragging within fieldLayer
-    newLeft = Math.max(0, Math.min(newLeft, fieldLayer.clientWidth - field.offsetWidth));
-    newTop = Math.max(0, Math.min(newTop, fieldLayer.clientHeight - field.offsetHeight));
     
-    field.style.left = `${newLeft}px`;
-    field.style.top = `${newTop}px`;
+    // Set default label edge
+    const defaultEdge = fieldElement.dataset.labelEdge || 'left';
+    fieldElement.classList.add(`label-edge-${defaultEdge}`);
   }
 
-  function onDragPointerUp() {
-    field.classList.remove('dragging'); // Re-enable transitions after drag
-    document.removeEventListener('pointermove', onDragPointerMove);
-    document.removeEventListener('pointerup', onDragPointerUp);
-    dispatchFieldUpdate(field);
-  }
-
-  // Resize handle
-  const resizeHandle = document.createElement('div');
-  resizeHandle.className = 'resize-handle';
-  field.appendChild(resizeHandle);
-
-  let resizeStartX, resizeStartY, resizeInitialWidth, resizeInitialHeight, resizeInitialFieldLeft, resizeInitialFieldTop;
-  resizeHandle.addEventListener('pointerdown', e => {
-    e.stopPropagation(); // Prevent field drag
-    setFocusedField(field);
-
-    resizeStartX = e.clientX;
-    resizeStartY = e.clientY;
-    resizeInitialWidth = field.offsetWidth;
-    resizeInitialHeight = field.offsetHeight;
-    resizeInitialFieldLeft = field.offsetLeft;
-    resizeInitialFieldTop = field.offsetTop;
-
-    field.classList.add('dragging'); // Disable transitions during resize
-    document.addEventListener('pointermove', onResizePointerMove);
-    document.addEventListener('pointerup', onResizePointerUp);
-  });
-
-  function onResizePointerMove(e) {
-    e.preventDefault();
-    let newWidth = resizeInitialWidth + (e.clientX - resizeStartX);
-    let newHeight = resizeInitialHeight + (e.clientY - resizeStartY);
-
-    // Constrain size
-    newWidth = Math.max(MIN_WIDTH, newWidth);
-    newHeight = Math.max(MIN_HEIGHT, newHeight);
-
-    // Constrain within fieldLayer boundaries
-    newWidth = Math.min(newWidth, fieldLayer.clientWidth - resizeInitialFieldLeft);
-    newHeight = Math.min(newHeight, fieldLayer.clientHeight - resizeInitialFieldTop);
+  _setupFieldInteractions(fieldElement) {
+    // Add resize handle
+    const resizeHandle = document.createElement('div');
+    resizeHandle.className = getCSSClass('RESIZE_HANDLE');
+    fieldElement.appendChild(resizeHandle);
     
-    field.style.width = `${newWidth}px`;
-    if (type === 'photo') {
-      field.style.height = `${newHeight}px`;
-    } else { // Text field: height adjusts to content after width change
-      field.style.height = 'auto';
-      // Force reflow to get new auto height
-      // Reading offsetHeight should trigger reflow if necessary
-      let autoHeight = field.offsetHeight;
-      field.style.height = `${Math.max(MIN_HEIGHT, autoHeight)}px`;
-    }
+    // Set up drag and resize handlers
+    this._setupDragHandler(fieldElement);
+    this._setupResizeHandler(fieldElement, resizeHandle);
+    
+    // Focus on click
+    fieldElement.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.setFocusedField(fieldElement);
+    });
   }
 
-  function onResizePointerUp() {
-    field.classList.remove('dragging'); // Re-enable transitions after resize
-    document.removeEventListener('pointermove', onResizePointerMove);
-    document.removeEventListener('pointerup', onResizePointerUp);
-    // For text fields, ensure height is correctly set after auto adjustment one last time
-    if (type !== 'photo') {
-        field.style.height = 'auto';
-        let finalAutoHeight = field.offsetHeight;
-        field.style.height = `${Math.max(MIN_HEIGHT, finalAutoHeight)}px`;
-    }
-    dispatchFieldUpdate(field);
+  _setupDragHandler(fieldElement) {
+    let dragState = null;
+    
+    const onDragMove = (e) => {
+      if (!dragState) return;
+      
+      e.preventDefault();
+      
+      // Calculate new position relative to field layer
+      const deltaX = e.clientX - dragState.startX;
+      const deltaY = e.clientY - dragState.startY;
+      
+      const newLeft = Math.max(0, Math.min(
+        dragState.startLeft + deltaX,
+        this._fieldLayer.clientWidth - fieldElement.offsetWidth
+      ));
+      const newTop = Math.max(0, Math.min(
+        dragState.startTop + deltaY,
+        this._fieldLayer.clientHeight - fieldElement.offsetHeight
+      ));
+      
+      fieldElement.style.left = `${newLeft}px`;
+      fieldElement.style.top = `${newTop}px`;
+    };
+    
+    const onDragEnd = () => {
+      if (!dragState) return;
+      
+      fieldElement.classList.remove(getCSSClass('DRAG_ACTIVE'));
+      document.removeEventListener('pointermove', onDragMove);
+      document.removeEventListener('pointerup', onDragEnd);
+      
+      this._dispatchFieldUpdate(fieldElement);
+      dragState = null;
+    };
+    
+    fieldElement.addEventListener('pointerdown', (e) => {
+      // Don't drag when clicking on resize handle or edge elements
+      if (e.target.classList.contains(getCSSClass('RESIZE_HANDLE')) || 
+          e.target.classList.contains('field-edge')) {
+        return;
+      }
+      
+      e.stopPropagation();
+      this.setFocusedField(fieldElement);
+      
+      dragState = {
+        startX: e.clientX,
+        startY: e.clientY,
+        startLeft: fieldElement.offsetLeft,
+        startTop: fieldElement.offsetTop
+      };
+      
+      fieldElement.classList.add(getCSSClass('DRAG_ACTIVE'));
+      document.addEventListener('pointermove', onDragMove);
+      document.addEventListener('pointerup', onDragEnd);
+    });
   }
-  
-  dispatchFieldUpdate(field); // Dispatch initial state
-  return {
-    id,
-    type,
-    x: field.offsetLeft,
-    y: field.offsetTop,
-    width: field.offsetWidth,
-    height: field.offsetHeight,
-    text: field.textContent,
-    fontFamily: field.style.fontFamily || 'Arial',
-    fontSize: parseInt(field.style.fontSize, 10) || 16
-  };
-}
 
-function dispatchFieldUpdate(fieldElement) {
-  const event = new CustomEvent('field:moved', { // Reusing 'field:moved' for simplicity, also for resize/text updates
-    detail: {
+  _setupResizeHandler(fieldElement, resizeHandle) {
+    let resizeState = null;
+    
+    resizeHandle.addEventListener('pointerdown', (e) => {
+      e.stopPropagation();
+      this.setFocusedField(fieldElement);
+      
+      resizeState = {
+        startX: e.clientX,
+        startY: e.clientY,
+        initialWidth: fieldElement.offsetWidth,
+        initialHeight: fieldElement.offsetHeight,
+        initialLeft: fieldElement.offsetLeft,
+        initialTop: fieldElement.offsetTop
+      };
+      
+      fieldElement.classList.add(getCSSClass('DRAG_ACTIVE'));
+      document.addEventListener('pointermove', onResizeMove);
+      document.addEventListener('pointerup', onResizeEnd);
+    });
+    
+    const onResizeMove = (e) => {
+      if (!resizeState) return;
+      
+      e.preventDefault();
+      let newWidth = Math.max(
+        CONFIG.FIELDS.MIN_WIDTH,
+        resizeState.initialWidth + (e.clientX - resizeState.startX)
+      );
+      let newHeight = Math.max(
+        CONFIG.FIELDS.MIN_HEIGHT,
+        resizeState.initialHeight + (e.clientY - resizeState.startY)
+      );
+      
+      // Constrain within layer boundaries
+      newWidth = Math.min(newWidth, this._fieldLayer.clientWidth - resizeState.initialLeft);
+      newHeight = Math.min(newHeight, this._fieldLayer.clientHeight - resizeState.initialTop);
+      
+      fieldElement.style.width = `${newWidth}px`;
+      
+      if (fieldElement.dataset.type === CONFIG.FIELDS.TYPES.PHOTO) {
+        fieldElement.style.height = `${newHeight}px`;
+      } else {
+        // Text fields auto-adjust height
+        fieldElement.style.height = 'auto';
+        const autoHeight = fieldElement.offsetHeight;
+        fieldElement.style.height = `${Math.max(CONFIG.FIELDS.MIN_HEIGHT, autoHeight)}px`;
+      }
+    };
+    
+    const onResizeEnd = () => {
+      if (!resizeState) return;
+      
+      fieldElement.classList.remove(getCSSClass('DRAG_ACTIVE'));
+      document.removeEventListener('pointermove', onResizeMove);
+      document.removeEventListener('pointerup', onResizeEnd);
+      
+      // Final height adjustment for text fields
+      if (fieldElement.dataset.type !== CONFIG.FIELDS.TYPES.PHOTO) {
+        fieldElement.style.height = 'auto';
+        const finalHeight = fieldElement.offsetHeight;
+        fieldElement.style.height = `${Math.max(CONFIG.FIELDS.MIN_HEIGHT, finalHeight)}px`;
+      }
+      
+      this._dispatchFieldUpdate(fieldElement);
+      resizeState = null;
+    };
+  }
+
+  _updateTextFieldContent(fieldElement, newText) {
+    // Preserve edge elements when updating text
+    const textNode = Array.from(fieldElement.childNodes)
+      .find(node => node.nodeType === Node.TEXT_NODE);
+    
+    if (textNode) {
+      textNode.textContent = newText;
+    } else {
+      const newTextNode = document.createTextNode(newText);
+      fieldElement.insertBefore(newTextNode, fieldElement.firstChild);
+    }
+    
+    // Handle label edge-based positioning
+    const labelEdge = fieldElement.dataset.labelEdge || 'left';
+    const currentLeft = fieldElement.offsetLeft;
+    const currentTop = fieldElement.offsetTop;
+    const currentRight = currentLeft + fieldElement.offsetWidth;
+    const currentBottom = currentTop + fieldElement.offsetHeight;
+    
+    // Measure new content properly
+    const measuredSize = this._measureTextContent(
+      newText,
+      fieldElement.style.fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY,
+      fieldElement.style.fontSize || `${CONFIG.FIELDS.DEFAULT_FONT_SIZE}px`
+    );
+    
+    // Use consistent padding that matches canvas rendering (2px each side)
+    const horizontalPadding = 4; // 2px padding on each side = 4px total
+    const newWidth = Math.max(CONFIG.FIELDS.MIN_WIDTH, measuredSize.width + horizontalPadding);
+    const newHeight = Math.max(CONFIG.FIELDS.MIN_HEIGHT, measuredSize.height);
+    
+    fieldElement.style.width = `${newWidth}px`;
+    fieldElement.style.height = `${newHeight}px`;
+    
+    // Adjust position based on label edge
+    if (labelEdge === 'right') {
+      const newLeft = currentRight - newWidth;
+      fieldElement.style.left = `${Math.max(0, newLeft)}px`;
+    } else if (labelEdge === 'bottom') {
+      const newTop = currentBottom - newHeight;
+      fieldElement.style.top = `${Math.max(0, newTop)}px`;
+    }
+    // For 'left' and 'top' edges, no position adjustment needed
+  }
+
+  _calculateDefaultPosition() {
+    const existingCount = this._fields.size;
+    const layerHeight = this._fieldLayer?.clientHeight || 300;
+    return (existingCount * CONFIG.FIELDS.STAGGER_OFFSET) % 
+           Math.max(CONFIG.FIELDS.STAGGER_OFFSET, layerHeight - CONFIG.FIELDS.STAGGER_OFFSET);
+  }
+
+  _getDefaultText(type) {
+    const textMap = {
+      [CONFIG.FIELDS.TYPES.NAME]: 'Name',
+      [CONFIG.FIELDS.TYPES.DOB]: 'Date of Birth',
+      [CONFIG.FIELDS.TYPES.ISSUE_DATE]: 'Issue Date',
+      [CONFIG.FIELDS.TYPES.EXPIRY_DATE]: 'Expiry Date',
+      [CONFIG.FIELDS.TYPES.CIVIL_NO]: 'Civil Number',
+      [CONFIG.FIELDS.TYPES.PHOTO]: 'Photo Area'
+    };
+    return textMap[type] || 'Field';
+  }
+
+  _getFieldConfiguration(fieldElement) {
+    return {
       id: fieldElement.id,
       type: fieldElement.dataset.type,
       x: fieldElement.offsetLeft,
       y: fieldElement.offsetTop,
       width: fieldElement.offsetWidth,
       height: fieldElement.offsetHeight,
-      text: fieldElement.textContent, // Ensure current text is dispatched
-      fontFamily: fieldElement.style.fontFamily || 'Arial',
-      fontSize: parseInt(fieldElement.style.fontSize, 10) || 16
-    }
-  });
-  fieldLayer.dispatchEvent(event);
-  console.log('Field updated:', event.detail);
-}
-
-export function getFieldPositions() {
-  const positions = {};
-  for (const id in fields) {
-    const field = fields[id];
-    positions[id] = {
-      id: field.id,
-      type: field.dataset.type,
-      x: field.offsetLeft,
-      y: field.offsetTop,
-      width: field.offsetWidth,
-      height: field.offsetHeight,
-      text: field.textContent,
-      fontFamily: field.style.fontFamily || 'Arial',
-      fontSize: parseInt(field.style.fontSize, 10) || 16
+      text: fieldElement.textContent,
+      fontFamily: fieldElement.style.fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY,
+      fontSize: parseInt(fieldElement.style.fontSize, 10) || CONFIG.FIELDS.DEFAULT_FONT_SIZE,
+      labelEdge: fieldElement.dataset.labelEdge || 'left'
     };
   }
-  return positions;
-}
 
-export function clearFields() {
-    while (fieldLayer.firstChild) {
-        fieldLayer.removeChild(fieldLayer.firstChild);
+  _dispatchFieldUpdate(fieldElement) {
+    const fieldConfig = this._getFieldConfiguration(fieldElement);
+    // Use the legacy event name for compatibility
+    this._emitFieldEvent('field:moved', fieldConfig);
+  }
+
+  _emitFieldEvent(eventName, detail) {
+    this._emitEvent(eventName, detail);
+    
+    // Also emit on field layer for backward compatibility
+    if (this._fieldLayer) {
+      this._fieldLayer.dispatchEvent(new CustomEvent(eventName, { detail }));
     }
-    for (const id in fields) {
-        delete fields[id];
-    }
-    fieldCounter = 0;
-    setFocusedField(null);
+  }
+
+  _emitEvent(eventName, detail) {
+    this.dispatchEvent(new CustomEvent(eventName, {
+      detail: {
+        ...detail,
+        timestamp: Date.now()
+      }
+    }));
+  }
+
+  /**
+   * Measures text content dimensions accurately
+   * @private
+   */
+  _measureTextContent(text, fontFamily, fontSize) {
+    const measureElement = document.createElement('div');
+    measureElement.style.position = 'absolute';
+    measureElement.style.visibility = 'hidden';
+    measureElement.style.whiteSpace = 'nowrap';
+    measureElement.style.fontFamily = fontFamily;
+    measureElement.style.fontSize = fontSize;
+    measureElement.style.padding = '0'; // Don't include padding in measurement
+    measureElement.textContent = text;
+    
+    document.body.appendChild(measureElement);
+    const width = measureElement.offsetWidth;
+    const height = measureElement.offsetHeight;
+    document.body.removeChild(measureElement);
+    
+    return { width, height };
+  }
 }
 
-export function updateFieldOverlayText(fieldId, newText) {
-    const fieldElement = fields[fieldId]; // fields is the internal map of fieldId -> DOM element
-    if (fieldElement) {
-        if (fieldElement.dataset.type === 'photo') {
-            // For photo fields in generated mode, clear the text content
-            fieldElement.textContent = '';
-        } else {
-            fieldElement.textContent = newText;
-            // Temporarily prevent wrapping and remove padding to measure true text width
-            const originalPadding = fieldElement.style.padding;
-            fieldElement.style.whiteSpace = 'nowrap';
-            fieldElement.style.padding = '2px 4px'; // Minimal padding for tight fit
-            fieldElement.style.width = 'auto';
-            fieldElement.style.height = 'auto';
-            // Force reflow to get new dimensions
-            let autoWidth = fieldElement.offsetWidth;
-            let autoHeight = fieldElement.offsetHeight;
-            fieldElement.style.width = `${Math.max(MIN_WIDTH, autoWidth)}px`;
-            fieldElement.style.height = `${Math.max(MIN_HEIGHT, autoHeight)}px`;
-            // Re-enable text wrapping
-            fieldElement.style.whiteSpace = 'normal';
-        }
-        // dispatchFieldUpdate(fieldElement); // Dispatch update so app.js can sync if needed (e.g. fields[id].text)
-                                          // This is now implicitly handled as app.js calls this, then if user moves/resizes,
-                                          // dispatchFieldUpdate will occur with the new text.
-    }
-}
+// Create and export singleton instance
+export const fieldManager = new FieldManager();
 
-export function hideAllFields() {
-    for (const id in fields) {
-        const field = fields[id];
-        if (field) {
-            field.style.display = 'none';
-        }
-    }
-}
+// Legacy exports for backward compatibility
+export const initializeFieldManager = (canvas) => fieldManager.initialize(canvas);
+export const addField = (type, text) => {
+  try {
+    return fieldManager.addField(type, { text });
+  } catch (error) {
+    alert("Please upload an ID template image first.");
+    return null;
+  }
+};
+export const getFieldPositions = () => fieldManager.getFieldConfigurations();
+export const clearFields = () => fieldManager.clearFields();
+export const updateFieldOverlayText = (fieldId, text) => fieldManager.updateFieldText(fieldId, text);
+export const hideAllFields = () => fieldManager.hideAllFields();
+export const showAllFields = () => fieldManager.showAllFields();
+export const updateFieldLayerPosition = () => fieldManager.updatePosition();
+export const cleanupFieldManager = () => fieldManager.destroy();
+export const enterGeneratedMode = () => fieldManager.enterGeneratedMode();
+export const exitGeneratedMode = () => fieldManager.exitGeneratedMode();
 
-export function showAllFields() {
-    for (const id in fields) {
-        const field = fields[id];
-        if (field) {
-            field.style.display = '';
-        }
-    }
-}
+// Export field layer reference for backward compatibility
+// Note: Access via document.getElementById('fieldLayer') is recommended for tests
+export const fieldLayer = { 
+  get element() { 
+    return fieldManager.fieldLayerElement || document.getElementById('fieldLayer'); 
+  } 
+};
 
-export function cleanupFieldManager() {
-    window.removeEventListener('resize', updateFieldLayerPosition);
-    document.removeEventListener('click', handleDocumentClick, true);
-}
-
-// Expose fieldLayer for app.js to potentially listen to events on it
-export { fieldLayer };
+export default fieldManager;

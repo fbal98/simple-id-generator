@@ -554,12 +554,13 @@ hr {
     position: absolute;
     background: linear-gradient(135deg, var(--primary-color-lighter) 0%, var(--accent-indigo-light) 100%);
     border: 2px solid var(--primary-color-light);
-    padding: var(--spacing-xs) var(--spacing-sm);
+    padding: 2px;
     cursor: move;
-    font-size: 0.8125rem;
-    color: var(--primary-color-dark);
-    font-weight: 500;
-    pointer-events: all;
+    font-size: 16px; /* Match CONFIG.FIELDS.DEFAULT_FONT_SIZE */
+    font-family: Arial; /* Match CONFIG.FIELDS.DEFAULT_FONT_FAMILY exactly */
+    pointer-events: auto;
+    color: black; /* Match canvas text color */
+    font-weight: normal; /* Match canvas text weight */
     user-select: none;
     border-radius: var(--radius-sm);
     box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.1);
@@ -585,19 +586,15 @@ hr {
     }
 }
 
-/* Subtle styling for generated ID fields */
-.field.generated-mode:not([data-type="photo"]) {
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    box-shadow: none;
-}
+/* Subtle styling for generated ID fields - removed for consistency */
 
 .field:not([data-type="photo"]) {
-    white-space: normal;
-    word-break: break-word;
+    white-space: nowrap;
+    word-break: normal;
     min-height: 32px;
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Match canvas textBaseline: 'top' */
+    line-height: 1; /* Prevent extra line spacing that differs from canvas */
 }
 
 .field[data-type="photo"] {
@@ -801,32 +798,207 @@ select,
 
 /* === Generated mode field styling === */
 .field.generated-mode {
-    background: rgba(59, 130, 246, 0.3);
-    backdrop-filter: none;
-    border-color: rgba(59, 130, 246, 0.5);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    box-shadow: 0 1px 4px 0 rgba(59, 130, 246, 0.1);
 }
 
 .field.generated-mode:hover {
-    background: rgba(59, 130, 246, 0.4);
-    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 2px 8px 0 rgba(59, 130, 246, 0.15);
 }
 
 .field.generated-mode.focused {
-    background: rgba(59, 130, 246, 0.5);
+    background: rgba(255, 255, 255, 0.95);
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-color-light), 0 4px 12px 0 rgba(59, 130, 246, 0.2);
 }
 
 .field[data-type="photo"].generated-mode {
-    background: rgba(244, 63, 94, 0.3);
-    border-color: rgba(244, 63, 94, 0.5);
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(244, 63, 94, 0.3);
+    box-shadow: 0 1px 4px 0 rgba(244, 63, 94, 0.1);
 }
 
 .field[data-type="photo"].generated-mode:hover {
-    background: rgba(244, 63, 94, 0.4);
-    border-color: var(--danger-color);
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(244, 63, 94, 0.5);
+    box-shadow: 0 2px 8px 0 rgba(244, 63, 94, 0.15);
 }
 
 .field[data-type="photo"].generated-mode.focused {
-    background: rgba(244, 63, 94, 0.5);
+    background: rgba(255, 255, 255, 0.95);
     border-color: var(--danger-color);
+    box-shadow: 0 0 0 2px var(--danger-color-light), 0 4px 12px 0 rgba(244, 63, 94, 0.2);
+}
+
+/* === Field Edge Indicators === */
+.field-edge {
+    position: absolute;
+    cursor: pointer;
+    z-index: 5;
+    pointer-events: all;
+}
+
+.field-edge.edge-left,
+.field-edge.edge-right {
+    top: 0;
+    bottom: 0;
+    width: 8px;
+}
+
+.field-edge.edge-top,
+.field-edge.edge-bottom {
+    left: 8px;
+    right: 8px;
+    height: 8px;
+}
+
+.field-edge.edge-left {
+    left: 0;
+}
+
+.field-edge.edge-right {
+    right: 0;
+}
+
+.field-edge.edge-top {
+    top: 0;
+}
+
+.field-edge.edge-bottom {
+    bottom: 0;
+}
+
+/* Active border styling based on label edge */
+.field.label-edge-left {
+    border-left: 3px solid var(--primary-color);
+    border-right: 2px solid var(--primary-color-light);
+    text-align: left;
+    justify-content: flex-start;
+    padding: 2px; /* Standard padding matching canvas */
+}
+
+.field.label-edge-right {
+    border-right: 3px solid var(--primary-color);
+    border-left: 2px solid var(--primary-color-light);
+    text-align: right;
+    justify-content: flex-end;
+    padding: 2px; /* Standard padding matching canvas */
+}
+
+.field.label-edge-top {
+    border-top: 3px solid var(--primary-color);
+    border-bottom: 2px solid var(--primary-color-light);
+    text-align: center;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 12px; /* Extra padding for top label - matches canvas paddingY * 6 */
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-bottom: 2px;
+}
+
+.field.label-edge-bottom {
+    border-bottom: 3px solid var(--primary-color);
+    border-top: 2px solid var(--primary-color-light);
+    text-align: center;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 12px; /* Extra padding for bottom label - matches canvas paddingY * 6 */
+    padding-left: 2px;
+    padding-right: 2px;
+    padding-top: 2px;
+}
+
+/* Hover effect on edges */
+.field:not(.label-edge-left) .field-edge.edge-left:hover ~ *,
+.field:not(.label-edge-left):has(.field-edge.edge-left:hover) {
+    border-left-color: var(--primary-color);
+    border-left-width: 3px;
+}
+
+.field:not(.label-edge-right) .field-edge.edge-right:hover ~ *,
+.field:not(.label-edge-right):has(.field-edge.edge-right:hover) {
+    border-right-color: var(--primary-color);
+    border-right-width: 3px;
+}
+
+.field:not(.label-edge-top) .field-edge.edge-top:hover ~ *,
+.field:not(.label-edge-top):has(.field-edge.edge-top:hover) {
+    border-top-color: var(--primary-color);
+    border-top-width: 3px;
+}
+
+.field:not(.label-edge-bottom) .field-edge.edge-bottom:hover ~ *,
+.field:not(.label-edge-bottom):has(.field-edge.edge-bottom:hover) {
+    border-bottom-color: var(--primary-color);
+    border-bottom-width: 3px;
+}
+
+/* Visual feedback when hovering edges */
+.field .field-edge:hover::before {
+    content: '';
+    position: absolute;
+    opacity: 0.3;
+    pointer-events: none;
+}
+
+.field .field-edge.edge-left:hover::before,
+.field .field-edge.edge-right:hover::before {
+    top: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+.field .field-edge.edge-top:hover::before,
+.field .field-edge.edge-bottom:hover::before {
+    left: 0;
+    right: 0;
+    height: 100%;
+}
+
+.field .field-edge.edge-left:hover::before {
+    background: linear-gradient(90deg, 
+        var(--primary-color-light) 0%, 
+        transparent 100%);
+}
+
+.field .field-edge.edge-right:hover::before {
+    background: linear-gradient(-90deg, 
+        var(--primary-color-light) 0%, 
+        transparent 100%);
+}
+
+.field .field-edge.edge-top:hover::before {
+    background: linear-gradient(180deg, 
+        var(--primary-color-light) 0%, 
+        transparent 100%);
+}
+
+.field .field-edge.edge-bottom:hover::before {
+    background: linear-gradient(0deg, 
+        var(--primary-color-light) 0%, 
+        transparent 100%);
+}
+
+/* Hide edges on photo fields and when not focused */
+.field[data-type="photo"] .field-edge,
+.field:not(.focused) .field-edge {
+    display: none;
+}
+
+.field.focused .field-edge {
+    display: block;
+}
+
+/* Animate border changes */
+.field {
+    transition: border-color var(--transition-fast), 
+                border-width var(--transition-fast),
+                box-shadow var(--transition-fast),
+                background var(--transition-fast),
+                transform var(--transition-fast);
 }

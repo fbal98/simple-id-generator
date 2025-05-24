@@ -13,7 +13,6 @@ A simple web application to generate randomized ID cards based on a user-provide
 - [Bun](https://bun.sh/) for server and static file serving.
 - HTML, CSS, and vanilla JavaScript (ES Modules) for the front-end.
 - [JSZip](https://stuk.github.io/jszip/) (via CDN) for ZIP archive creation.
-- [Playwright](https://playwright.dev/) for comprehensive E2E testing.
 
 ## Prerequisites
 - Bun (v0.5 or later) installed and available in your PATH.
@@ -32,49 +31,18 @@ bun start
 ```
 The server will start on http://localhost:3000. Open this URL in your browser.
 
-## Testing
-This project includes comprehensive E2E tests with **offline-first testing** - no internet required!
-
-```bash
-# Install Playwright browsers
-bun run test:install
-
-# Quick smoke test (~3s) - Perfect for development
-bun run test:smoke
-
-# Core functionality tests (~10s) - Good for CI/pre-commit hooks
-bun run test:core
-
-# Full test suite optimized for speed (~30s) - Chromium only
-bun run test:fast
-
-# Complete cross-browser testing (~2-3 minutes)
-bun test
-
-# Debug mode for test development
-bun run test:debug
-bun run test:ui
-```
-
-**Offline Testing Features:**
-- 🌐 **No Internet Required**: All tests work without network connectivity
-- 🎭 **Mock API Responses**: AI face endpoint mocked with placeholder images
-- ⚡ **Performance Optimized**: Disabled video/screenshot recording for speed
-- 🎯 **Realistic Scenarios**: Uses actual Omani ID template structure
-
-**Test Coverage:**
-- ✅ Template upload and validation
-- ✅ Field management (drag, resize, styling)
-- ✅ ID generation with random data
-- ✅ Download functionality (PNG/ZIP)
-- ✅ Server proxy and API endpoints (mocked offline)
-- ✅ Error scenarios and edge cases
-- ✅ Cross-browser compatibility (Chromium, Firefox, WebKit)
 
 ## Usage
 1. In the **Controls** panel (left), upload your ID template image.
 2. Click the buttons to add fields: Name, Date of Birth, Issue Date, Expiry Date, Civil Number, or Photo.
-3. Drag and resize fields on the template to position them as desired.
+3. **Position and configure fields:**
+   - **Drag** fields to reposition them on the template
+   - **Resize** fields using the resize handle (bottom-right corner when focused)
+   - **Set label edge** by clicking on edge indicators (left, right, top, bottom) when field is focused:
+     - **Left edge**: Text grows rightward (default)
+     - **Right edge**: Text grows leftward  
+     - **Top edge**: Text is centered with top padding
+     - **Bottom edge**: Text is centered with bottom padding
 4. In the **Generation** panel (right), set the number of IDs to generate.
 5. Click **Generate IDs**.
 6. Preview the first ID on the canvas. Click **Download Preview** to save it.
@@ -86,26 +54,13 @@ bun run test:ui
 .
 ├── index.html                    # Main HTML file
 ├── server.js                     # Bun server for static files and proxying AI face fetch
-├── package.json                  # Project metadata and scripts  
-├── bun.lockb                     # Bun lockfile
-├── playwright.config.js          # Playwright test configuration
-├── E2E_TESTING_CHECKLIST.md     # Comprehensive testing documentation
+├── package.json                  # Project metadata and scripts
 ├── styles/
 │   └── main.css                  # Stylesheet
-├── js/
-│   ├── app.js                    # Front-end application logic
-│   ├── fieldManager.js           # Draggable/resizable field manager
-│   └── dataGenerator.js          # Random data generator functions
-└── tests/                        # E2E test suite (405 tests)
-    ├── fixtures/
-    │   └── realistic-id-template.svg  # SVG test template based on Omani ID structure
-    ├── template-upload.spec.js    # Template upload functionality tests
-    ├── field-management.spec.js   # Field drag/resize/styling tests
-    ├── id-generation.spec.js      # ID generation and data validation tests
-    ├── download.spec.js           # Download PNG/ZIP functionality tests
-    ├── server-proxy.spec.js       # Server API and proxy endpoint tests
-    ├── error-scenarios.spec.js    # Error handling and edge case tests
-    └── full-workflow.spec.js      # End-to-end integration workflow tests
+└── js/
+    ├── app.js                    # Front-end application logic
+    ├── fieldManager.js           # Draggable/resizable field manager
+    └── dataGenerator.js          # Random data generator functions
 ```
 
 ## Configuration

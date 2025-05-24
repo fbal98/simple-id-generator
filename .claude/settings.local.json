@@ -16,7 +16,17 @@
       "Bash(grep:*)",
       "Bash(timeout:*)",
       "Bash(bun start)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(-print)",
+      "Bash(ls:*)",
+      "Bash(playwright test:*)",
+      "Bash(rg:*)",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "Bash(sed:*)",
+      "mcp__puppeteer__puppeteer_click"
     ],
     "deny": []
   }
