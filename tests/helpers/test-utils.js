@@ -42,10 +42,11 @@ export class TestUtils {
   }
 
   /**
-   * Position a field by dragging to coordinates
+   * Position a field by dragging to coordinates (relative to field layer)
    */
   async positionField(fieldSelector, x, y) {
     const field = this.page.locator(fieldSelector);
+    const fieldLayer = this.page.locator('#fieldLayer');
     
     // First wait for the field to be visible
     await field.waitFor({ state: 'visible' });
@@ -53,20 +54,26 @@ export class TestUtils {
     // Click to focus the field first
     await field.click();
     
-    // Use a more reliable drag method by getting the center of the field
-    const box = await field.boundingBox();
-    if (!box) {
-      throw new Error(`Could not get bounding box for field: ${fieldSelector}`);
+    // Get bounding boxes
+    const fieldBox = await field.boundingBox();
+    const layerBox = await fieldLayer.boundingBox();
+    
+    if (!fieldBox || !layerBox) {
+      throw new Error('Could not get bounding boxes for field or layer');
     }
     
-    // Calculate the drag delta from current position to target
-    const deltaX = x - box.x;
-    const deltaY = y - box.y;
+    // Current position relative to field layer
+    const currentX = fieldBox.x - layerBox.x;
+    const currentY = fieldBox.y - layerBox.y;
+    
+    // Calculate absolute target position
+    const targetAbsX = layerBox.x + x;
+    const targetAbsY = layerBox.y + y;
     
     // Perform the drag by mouse operations
-    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await this.page.mouse.move(fieldBox.x + fieldBox.width / 2, fieldBox.y + fieldBox.height / 2);
     await this.page.mouse.down();
-    await this.page.mouse.move(x + box.width / 2, y + box.height / 2, { steps: 5 });
+    await this.page.mouse.move(targetAbsX + fieldBox.width / 2, targetAbsY + fieldBox.height / 2, { steps: 5 });
     await this.page.mouse.up();
     
     // Wait a bit for the position to update
@@ -88,9 +95,20 @@ export class TestUtils {
     await field.hover();
     
     const resizeHandle = field.locator('.resize-handle');
-    await resizeHandle.dragTo(resizeHandle, {
-      targetPosition: { x: deltaX, y: deltaY }
-    });
+    const box = await resizeHandle.boundingBox();
+    
+    if (!box) {
+      throw new Error('Resize handle not found');
+    }
+    
+    // Perform drag operation manually
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await this.page.mouse.down();
+    await this.page.mouse.move(box.x + box.width / 2 + deltaX, box.y + box.height / 2 + deltaY, { steps: 5 });
+    await this.page.mouse.up();
+    
+    // Wait for resize to complete
+    await this.page.waitForTimeout(100);
   }
 
   /**
@@ -176,8 +194,22 @@ export class TestUtils {
    */
   async getFieldPosition(fieldSelector) {
     const field = this.page.locator(fieldSelector);
-    const box = await field.boundingBox();
-    return { x: box.x, y: box.y, width: box.width, height: box.height };
+    const fieldLayer = this.page.locator('#fieldLayer');
+    
+    const fieldBox = await field.boundingBox();
+    const layerBox = await fieldLayer.boundingBox();
+    
+    if (!fieldBox || !layerBox) {
+      throw new Error('Could not get bounding boxes for field or layer');
+    }
+    
+    // Return position relative to the field layer
+    return { 
+      x: fieldBox.x - layerBox.x, 
+      y: fieldBox.y - layerBox.y, 
+      width: fieldBox.width, 
+      height: fieldBox.height 
+    };
   }
 
   /**

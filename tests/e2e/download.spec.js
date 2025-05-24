@@ -29,62 +29,66 @@ test.describe('Download & Post-Generation Flows', () => {
   });
 
   test('should download preview of generated ID', async ({ page }) => {
-    // Look for download/preview button
-    const downloadBtn = page.locator('#download-preview, .download-btn, [data-action="download"]').first();
+    // Wait for download preview button to be visible
+    const downloadBtn = page.locator('#downloadPreviewButton');
+    await expect(downloadBtn).toBeVisible();
     
-    if (await downloadBtn.count() > 0) {
-      const download = await testUtils.downloadFile('#download-preview, .download-btn, [data-action="download"]');
-      
-      // Verify download occurred
-      expect(download.filename).toBeTruthy();
-      expect(download.path).toBeTruthy();
-      
-      // Verify file type
-      expect(download.filename).toMatch(/\.(png|jpg|jpeg)$/i);
-    } else {
-      // Try right-click context menu or other download methods
-      const generatedId = page.locator('.generated-id').first();
-      await generatedId.click({ button: 'right' });
-      
-      // Look for save/download in context menu
-      const saveOption = page.locator('text="Save"', 'text="Download"').first();
-      if (await saveOption.count() > 0) {
-        const download = await page.waitForDownload();
-        expect(download).toBeTruthy();
-      }
-    }
+    // Set up download promise before clicking
+    const downloadPromise = page.waitForEvent('download');
+    await downloadBtn.click();
+    
+    // Wait for download
+    const download = await downloadPromise;
+    
+    // Verify download occurred
+    expect(download.suggestedFilename()).toBeTruthy();
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    
+    // Verify file type
+    expect(download.suggestedFilename()).toMatch(/\.(png|jpg|jpeg)$/i);
   });
 
   test('should download all IDs as ZIP archive', async ({ page }) => {
     // Generate multiple IDs first
     await testUtils.generateIds(3);
     
-    // Look for ZIP download button
-    const zipDownloadBtn = page.locator('#download-all, .download-zip, [data-action="download-zip"]').first();
+    // Wait for download all button to be visible (appears after generation)
+    const zipDownloadBtn = page.locator('#downloadAllButton');
+    await expect(zipDownloadBtn).toBeVisible();
     
-    if (await zipDownloadBtn.count() > 0) {
-      const download = await testUtils.downloadFile('#download-all, .download-zip, [data-action="download-zip"]');
-      
-      // Verify ZIP download
-      expect(download.filename).toBeTruthy();
-      expect(download.filename).toMatch(/\.zip$/i);
-      expect(download.path).toBeTruthy();
-    }
+    // Set up download promise before clicking
+    const downloadPromise = page.waitForEvent('download');
+    await zipDownloadBtn.click();
+    
+    // Wait for download
+    const download = await downloadPromise;
+    
+    // Verify ZIP download
+    expect(download.suggestedFilename()).toBeTruthy();
+    expect(download.suggestedFilename()).toMatch(/\.zip$/i);
+    const path = await download.path();
+    expect(path).toBeTruthy();
   });
 
   test('should verify downloaded file integrity', async ({ page }) => {
-    const downloadBtn = page.locator('#download-preview, .download-btn, [data-action="download"]').first();
+    const downloadBtn = page.locator('#downloadPreviewButton');
+    await expect(downloadBtn).toBeVisible();
     
-    if (await downloadBtn.count() > 0) {
-      const download = await testUtils.downloadFile('#download-preview, .download-btn, [data-action="download"]');
-      
-      // Verify file exists and has content
-      const fs = require('fs');
-      if (download.path && fs.existsSync(download.path)) {
-        const stats = fs.statSync(download.path);
-        expect(stats.size).toBeGreaterThan(1000); // Should be a reasonable file size
-      }
-    }
+    // Set up download promise before clicking
+    const downloadPromise = page.waitForEvent('download');
+    await downloadBtn.click();
+    
+    // Wait for download
+    const download = await downloadPromise;
+    const path = await download.path();
+    
+    // Verify file exists and has content
+    const fs = require('fs');
+    expect(fs.existsSync(path)).toBeTruthy();
+    
+    const stats = fs.statSync(path);
+    expect(stats.size).toBeGreaterThan(1000); // Should be a reasonable file size
   });
 
   test('should handle download with no generated IDs', async ({ page }) => {
@@ -198,7 +202,7 @@ test.describe('Download & Post-Generation Flows', () => {
       }
       
       // Wait for download to complete
-      await page.waitForDownload({ timeout: 30000 });
+      await page.waitForEvent('download', { timeout: 30000 });
     }
   });
 
