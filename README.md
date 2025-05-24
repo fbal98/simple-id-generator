@@ -74,7 +74,14 @@ bun run test:ui
 ## Usage
 1. In the **Controls** panel (left), upload your ID template image.
 2. Click the buttons to add fields: Name, Date of Birth, Issue Date, Expiry Date, Civil Number, or Photo.
-3. Drag and resize fields on the template to position them as desired.
+3. **Position and configure fields:**
+   - **Drag** fields to reposition them on the template
+   - **Resize** fields using the resize handle (bottom-right corner when focused)
+   - **Set label edge** by clicking on edge indicators (left, right, top, bottom) when field is focused:
+     - **Left edge**: Text grows rightward (default)
+     - **Right edge**: Text grows leftward  
+     - **Top edge**: Text is centered with top padding
+     - **Bottom edge**: Text is centered with bottom padding
 4. In the **Generation** panel (right), set the number of IDs to generate.
 5. Click **Generate IDs**.
 6. Preview the first ID on the canvas. Click **Download Preview** to save it.

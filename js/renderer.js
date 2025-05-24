@@ -221,6 +221,7 @@ export class CanvasRenderer {
   _renderTextField(ctx, field, textDataById, x, y, width, height, scaleX, scaleY) {
     const textToDraw = textDataById[field.id] || `[${field.type}]`;
     const scaledFontSize = (field.fontSize || CONFIG.FIELDS.DEFAULT_FONT_SIZE) * scaleY;
+    const labelEdge = field.labelEdge || 'left';
     
     // Set font
     ctx.font = `${scaledFontSize}px ${field.fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY}`;
@@ -229,9 +230,43 @@ export class CanvasRenderer {
     const paddingX = 2 * scaleX;
     const paddingY = 2 * scaleY;
     
-    // Render text (single line, no wrapping)
+    // Measure text for alignment
+    const textMetrics = ctx.measureText(String(textToDraw).trim());
+    const textWidth = textMetrics.width;
+    
+    // Save context state
+    ctx.save();
+    
+    // Set fill style
     ctx.fillStyle = 'black';
-    ctx.fillText(String(textToDraw).trim(), x + paddingX, y + paddingY);
+    
+    // Calculate text position based on label edge
+    let textX = x + paddingX;
+    let textY = y + paddingY;
+    
+    switch (labelEdge) {
+      case 'right':
+        // Align text to the right edge
+        textX = x + width - paddingX - textWidth;
+        break;
+      case 'top':
+        // Center text horizontally, align to top
+        textX = x + (width - textWidth) / 2;
+        textY = y + paddingY * 6; // Extra padding for top label
+        break;
+      case 'bottom':
+        // Center text horizontally, align to bottom
+        textX = x + (width - textWidth) / 2;
+        textY = y + height - paddingY * 6 - scaledFontSize; // Account for font height
+        break;
+      // 'left' is default, no adjustment needed
+    }
+    
+    // Render text (single line, no wrapping)
+    ctx.fillText(String(textToDraw).trim(), textX, textY);
+    
+    // Restore context state
+    ctx.restore();
   }
 
   /**

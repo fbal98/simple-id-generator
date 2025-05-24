@@ -58,7 +58,7 @@ export class AppState extends EventTarget {
   }
 
   addField(fieldConfig) {
-    const { id, type, x = CONFIG.FIELDS.POSITION_LEFT, y, width, height, fontFamily, fontSize, text, anchorSide } = fieldConfig;
+    const { id, type, x = CONFIG.FIELDS.POSITION_LEFT, y, width, height, fontFamily, fontSize, text, labelEdge } = fieldConfig;
     
     if (!isValidFieldType(type)) {
       throw new Error(`Invalid field type: ${type}`);
@@ -80,7 +80,7 @@ export class AppState extends EventTarget {
       fontFamily: fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY,
       fontSize: fontSize || CONFIG.FIELDS.DEFAULT_FONT_SIZE,
       text: text || this._getDefaultText(type),
-      anchorSide: anchorSide || 'left',
+      labelEdge: labelEdge || 'left',
       createdAt: Date.now()
     };
 

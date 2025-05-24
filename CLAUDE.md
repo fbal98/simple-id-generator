@@ -172,10 +172,17 @@ The project uses a multi-layered testing approach:
 
 ## Field Overlay Implementation Details
 
-The field overlay system uses a draggable/resizable design pattern:
+The field overlay system uses a draggable/resizable design pattern with WYSIWYG (What You See Is What You Get) functionality:
 
 1. **Field Creation**: Fields auto-size to fit their content using `whiteSpace: nowrap` measurement
-2. **Text Fields**: Use minimal padding (2px 4px) for tight visual fit
-3. **Generated Mode**: Fields get `.generated-mode` class for subtle styling during ID generation
-4. **Resize Behavior**: Text fields auto-adjust height when width changes
-5. **Canvas Rendering**: Single-line text rendering without wrapping, scaled to fit field dimensions
+2. **Text Fields**: Use minimal padding (2px each side) for tight visual fit that matches canvas rendering
+3. **Label Edge System**: Text fields support 4 label edge positions (left, right, top, bottom):
+   - **Left Edge**: Text grows rightward from the left edge (default)
+   - **Right Edge**: Text grows leftward from the right edge
+   - **Top Edge**: Text is centered horizontally with top padding
+   - **Bottom Edge**: Text is centered horizontally with bottom padding
+4. **Edge Selection**: Click on edge indicators (visible when field is focused) to change label position
+5. **Generated Mode**: Fields get `.generated-mode` class for subtle styling during ID generation
+6. **Resize Behavior**: Text fields auto-adjust height when width changes, position adjusts based on label edge
+7. **Canvas Rendering**: Single-line text rendering with alignment matching overlay field positioning
+8. **WYSIWYG Design**: Overlay fields precisely match the final rendered output positioning and alignment

@@ -372,7 +372,7 @@ export class FieldManager extends EventTarget {
     field.className = getCSSClass('FIELD');
     field.dataset.type = type;
     field.id = fieldId;
-    field.dataset.anchorSide = 'left';
+    field.dataset.labelEdge = 'left';
     
     // Create text node
     const textNode = document.createTextNode(text);
@@ -408,10 +408,12 @@ export class FieldManager extends EventTarget {
         fieldElement.style.fontSize
       );
       
-      fieldElement.style.width = `${Math.max(CONFIG.FIELDS.MIN_WIDTH, measuredSize.width + 24)}px`; // Extra padding for visual comfort
+      // Use consistent padding that matches canvas rendering
+      const horizontalPadding = 4; // 2px padding on each side
+      fieldElement.style.width = `${Math.max(CONFIG.FIELDS.MIN_WIDTH, measuredSize.width + horizontalPadding)}px`;
       fieldElement.style.height = `${Math.max(CONFIG.FIELDS.MIN_HEIGHT, measuredSize.height)}px`;
       
-      // Add edge elements for anchor selection
+      // Add edge elements for label edge selection
       this._addEdgeElements(fieldElement);
     }
   }
@@ -425,25 +427,36 @@ export class FieldManager extends EventTarget {
     rightEdge.className = 'field-edge edge-right';
     fieldElement.appendChild(rightEdge);
     
+    const topEdge = document.createElement('div');
+    topEdge.className = 'field-edge edge-top';
+    fieldElement.appendChild(topEdge);
+    
+    const bottomEdge = document.createElement('div');
+    bottomEdge.className = 'field-edge edge-bottom';
+    fieldElement.appendChild(bottomEdge);
+    
     // Set up edge click handlers
-    leftEdge.addEventListener('click', (e) => {
-      e.stopPropagation();
-      fieldElement.dataset.anchorSide = 'left';
-      fieldElement.classList.add('anchor-left');
-      fieldElement.classList.remove('anchor-right');
-      this._dispatchFieldUpdate(fieldElement);
+    const edges = ['left', 'right', 'top', 'bottom'];
+    const edgeElements = { left: leftEdge, right: rightEdge, top: topEdge, bottom: bottomEdge };
+    
+    edges.forEach(edge => {
+      edgeElements[edge].addEventListener('click', (e) => {
+        e.stopPropagation();
+        fieldElement.dataset.labelEdge = edge;
+        
+        // Remove all label edge classes
+        edges.forEach(e => fieldElement.classList.remove(`label-edge-${e}`));
+        
+        // Add the current edge class
+        fieldElement.classList.add(`label-edge-${edge}`);
+        
+        this._dispatchFieldUpdate(fieldElement);
+      });
     });
     
-    rightEdge.addEventListener('click', (e) => {
-      e.stopPropagation();
-      fieldElement.dataset.anchorSide = 'right';
-      fieldElement.classList.add('anchor-right');
-      fieldElement.classList.remove('anchor-left');
-      this._dispatchFieldUpdate(fieldElement);
-    });
-    
-    // Set default anchor
-    fieldElement.classList.add('anchor-left');
+    // Set default label edge
+    const defaultEdge = fieldElement.dataset.labelEdge || 'left';
+    fieldElement.classList.add(`label-edge-${defaultEdge}`);
   }
 
   _setupFieldInteractions(fieldElement) {
@@ -466,7 +479,41 @@ export class FieldManager extends EventTarget {
   _setupDragHandler(fieldElement) {
     let dragState = null;
     
+    const onDragMove = (e) => {
+      if (!dragState) return;
+      
+      e.preventDefault();
+      
+      // Calculate new position relative to field layer
+      const deltaX = e.clientX - dragState.startX;
+      const deltaY = e.clientY - dragState.startY;
+      
+      const newLeft = Math.max(0, Math.min(
+        dragState.startLeft + deltaX,
+        this._fieldLayer.clientWidth - fieldElement.offsetWidth
+      ));
+      const newTop = Math.max(0, Math.min(
+        dragState.startTop + deltaY,
+        this._fieldLayer.clientHeight - fieldElement.offsetHeight
+      ));
+      
+      fieldElement.style.left = `${newLeft}px`;
+      fieldElement.style.top = `${newTop}px`;
+    };
+    
+    const onDragEnd = () => {
+      if (!dragState) return;
+      
+      fieldElement.classList.remove(getCSSClass('DRAG_ACTIVE'));
+      document.removeEventListener('pointermove', onDragMove);
+      document.removeEventListener('pointerup', onDragEnd);
+      
+      this._dispatchFieldUpdate(fieldElement);
+      dragState = null;
+    };
+    
     fieldElement.addEventListener('pointerdown', (e) => {
+      // Don't drag when clicking on resize handle or edge elements
       if (e.target.classList.contains(getCSSClass('RESIZE_HANDLE')) || 
           e.target.classList.contains('field-edge')) {
         return;
@@ -486,34 +533,6 @@ export class FieldManager extends EventTarget {
       document.addEventListener('pointermove', onDragMove);
       document.addEventListener('pointerup', onDragEnd);
     });
-    
-    const onDragMove = (e) => {
-      if (!dragState) return;
-      
-      e.preventDefault();
-      const newLeft = Math.max(0, Math.min(
-        dragState.startLeft + e.clientX - dragState.startX,
-        this._fieldLayer.clientWidth - fieldElement.offsetWidth
-      ));
-      const newTop = Math.max(0, Math.min(
-        dragState.startTop + e.clientY - dragState.startY,
-        this._fieldLayer.clientHeight - fieldElement.offsetHeight
-      ));
-      
-      fieldElement.style.left = `${newLeft}px`;
-      fieldElement.style.top = `${newTop}px`;
-    };
-    
-    const onDragEnd = () => {
-      if (!dragState) return;
-      
-      fieldElement.classList.remove(getCSSClass('DRAG_ACTIVE'));
-      document.removeEventListener('pointermove', onDragMove);
-      document.removeEventListener('pointerup', onDragEnd);
-      
-      this._dispatchFieldUpdate(fieldElement);
-      dragState = null;
-    };
   }
 
   _setupResizeHandler(fieldElement, resizeHandle) {
@@ -597,10 +616,12 @@ export class FieldManager extends EventTarget {
       fieldElement.insertBefore(newTextNode, fieldElement.firstChild);
     }
     
-    // Handle anchor-based positioning
-    const anchorSide = fieldElement.dataset.anchorSide || 'left';
+    // Handle label edge-based positioning
+    const labelEdge = fieldElement.dataset.labelEdge || 'left';
     const currentLeft = fieldElement.offsetLeft;
+    const currentTop = fieldElement.offsetTop;
     const currentRight = currentLeft + fieldElement.offsetWidth;
+    const currentBottom = currentTop + fieldElement.offsetHeight;
     
     // Measure new content properly
     const measuredSize = this._measureTextContent(
@@ -609,17 +630,23 @@ export class FieldManager extends EventTarget {
       fieldElement.style.fontSize || `${CONFIG.FIELDS.DEFAULT_FONT_SIZE}px`
     );
     
-    const newWidth = Math.max(CONFIG.FIELDS.MIN_WIDTH, measuredSize.width + 24); // Extra padding
+    // Use consistent padding that matches canvas rendering
+    const horizontalPadding = 4; // 2px padding on each side
+    const newWidth = Math.max(CONFIG.FIELDS.MIN_WIDTH, measuredSize.width + horizontalPadding);
     const newHeight = Math.max(CONFIG.FIELDS.MIN_HEIGHT, measuredSize.height);
     
     fieldElement.style.width = `${newWidth}px`;
     fieldElement.style.height = `${newHeight}px`;
     
-    // Adjust position for right-anchored fields
-    if (anchorSide === 'right') {
+    // Adjust position based on label edge
+    if (labelEdge === 'right') {
       const newLeft = currentRight - newWidth;
       fieldElement.style.left = `${Math.max(0, newLeft)}px`;
+    } else if (labelEdge === 'bottom') {
+      const newTop = currentBottom - newHeight;
+      fieldElement.style.top = `${Math.max(0, newTop)}px`;
     }
+    // For 'left' and 'top' edges, no position adjustment needed
   }
 
   _calculateDefaultPosition() {
@@ -652,7 +679,7 @@ export class FieldManager extends EventTarget {
       text: fieldElement.textContent,
       fontFamily: fieldElement.style.fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY,
       fontSize: parseInt(fieldElement.style.fontSize, 10) || CONFIG.FIELDS.DEFAULT_FONT_SIZE,
-      anchorSide: fieldElement.dataset.anchorSide || 'left'
+      labelEdge: fieldElement.dataset.labelEdge || 'left'
     };
   }
 
