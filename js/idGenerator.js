@@ -267,6 +267,9 @@ export class IDGenerator extends EventTarget {
         );
       }
 
+      // Import appState to get font weight
+      const { appState } = await import('./state.js');
+      
       canvasRenderer.renderGeneratedId(
         ctx,
         templateImage,
@@ -274,7 +277,8 @@ export class IDGenerator extends EventTarget {
         idInstanceData.text,
         idInstanceData.photos,
         scaleFactors.scaleX,
-        scaleFactors.scaleY
+        scaleFactors.scaleY,
+        appState.fontWeight
       );
 
       // Convert to data URL

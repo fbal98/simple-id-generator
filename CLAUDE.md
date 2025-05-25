@@ -8,7 +8,8 @@ Simple ID Generator is a web application that allows users to:
 1. Upload custom ID template images
 2. Add customizable text and photo fields to the template
 3. Generate multiple ID cards with randomized data
-4. Download individual IDs or all generated IDs as a ZIP archive
+4. Adjust text boldness with real-time preview (font weight 100-900)
+5. Download individual IDs or all generated IDs as a ZIP archive
 
 ## Commands
 
@@ -73,6 +74,14 @@ The application consists of a Bun-based server for static file serving and API p
    - Download all as ZIP (using JSZip from CDN)
    - Edit layout after generation
 
+4. **Text Boldness Control**
+   - Font weight slider (100-900) appears after ID generation
+   - Real-time preview updates when adjusting boldness
+   - Applies to all text fields (not photo fields)
+   - Persists in downloaded files (both single and ZIP)
+   - Works in edit mode with field overlays
+   - Font weight stored in app state and applied during rendering
+
 ## File Structure
 
 ```
@@ -106,6 +115,22 @@ The field overlay system uses a draggable/resizable design pattern with WYSIWYG 
 7. **Canvas Rendering**: Single-line text rendering with alignment matching overlay field positioning
 8. **WYSIWYG Design**: Overlay fields precisely match the final rendered output positioning and alignment
 
+## Text Boldness Implementation Details
+
+The text boldness control provides real-time font weight adjustment:
+
+1. **UI Control**: Range slider appears in right panel after ID generation
+2. **Font Weight Range**: 100-900 in increments of 100 (CSS standard font weights)
+3. **State Management**: Font weight stored in `appState._fontWeight` with getter/setter (default: 600)
+4. **Real-time Updates**: 
+   - Slider input events trigger immediate canvas re-rendering
+   - All generated IDs are re-rendered with new font weight
+   - Field overlays in edit mode also update their font weight
+5. **Canvas Rendering**: Font weight applied via `ctx.font` property (e.g., "700 16px Arial")
+6. **Scale Preservation**: Re-rendering maintains proper scale factors to prevent position shifts
+7. **Download Consistency**: Updated data URLs ensure downloads reflect current font weight
+8. **Session Persistence**: Font weight persists during session but resets to 600 when clearing generated IDs
+
 ## Testing
 
 ### Running Tests
@@ -129,6 +154,7 @@ bunx playwright test --update-snapshots
 - **ID Generation**: Tests single/batch generation with mocked APIs
 - **Output Validation**: Tests visual regression and content validation
 - **Downloads**: Tests preview and ZIP download functionality
+- **Text Boldness**: Tests slider control, real-time updates, and persistence
 
 ### Key Testing Notes
 - Tests run on port 3001 (configured in playwright.config.js)

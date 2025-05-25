@@ -47,8 +47,9 @@ export class CanvasRenderer {
    * @param {Object} photoDataById - Photo image objects for each photo field ID
    * @param {number} scaleX - Horizontal scale factor
    * @param {number} scaleY - Vertical scale factor
+   * @param {number} fontWeight - Font weight for text (100-900)
    */
-  renderGeneratedId(targetCtx, baseTemplate, fieldLayouts, textDataById, photoDataById, scaleX = 1, scaleY = 1) {
+  renderGeneratedId(targetCtx, baseTemplate, fieldLayouts, textDataById, photoDataById, scaleX = 1, scaleY = 1, fontWeight = 600) {
     if (!targetCtx) {
       throw new Error('Target canvas context is required');
     }
@@ -70,7 +71,7 @@ export class CanvasRenderer {
 
     // Render each field
     for (const [fieldId, field] of Object.entries(fieldsToRender)) {
-      this._renderField(targetCtx, field, textDataById, photoDataById, scaleX, scaleY);
+      this._renderField(targetCtx, field, textDataById, photoDataById, scaleX, scaleY, fontWeight);
     }
   }
 
@@ -182,7 +183,7 @@ export class CanvasRenderer {
    * Renders a single field to the canvas
    * @private
    */
-  _renderField(ctx, field, textDataById, photoDataById, scaleX, scaleY) {
+  _renderField(ctx, field, textDataById, photoDataById, scaleX, scaleY, fontWeight = 600) {
     const x = field.x * scaleX;
     const y = field.y * scaleY;
     const width = field.width * scaleX;
@@ -191,7 +192,7 @@ export class CanvasRenderer {
     if (field.type === CONFIG.FIELDS.TYPES.PHOTO) {
       this._renderPhotoField(ctx, field, photoDataById, x, y, width, height);
     } else {
-      this._renderTextField(ctx, field, textDataById, x, y, width, height, scaleX, scaleY);
+      this._renderTextField(ctx, field, textDataById, x, y, width, height, scaleX, scaleY, fontWeight);
     }
   }
 
@@ -218,13 +219,13 @@ export class CanvasRenderer {
    * Renders a text field
    * @private
    */
-  _renderTextField(ctx, field, textDataById, x, y, width, height, scaleX, scaleY) {
+  _renderTextField(ctx, field, textDataById, x, y, width, height, scaleX, scaleY, fontWeight = 600) {
     const textToDraw = textDataById[field.id] || `[${field.type}]`;
     const scaledFontSize = (field.fontSize || CONFIG.FIELDS.DEFAULT_FONT_SIZE) * scaleY;
     const labelEdge = field.labelEdge || 'left';
     
-    // Set font
-    ctx.font = `${scaledFontSize}px ${field.fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY}`;
+    // Set font with weight
+    ctx.font = `${fontWeight} ${scaledFontSize}px ${field.fontFamily || CONFIG.FIELDS.DEFAULT_FONT_FAMILY}`;
     
     // Calculate padding
     const paddingX = 2 * scaleX;

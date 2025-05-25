@@ -4,7 +4,7 @@ This directory contains comprehensive end-to-end tests for the Simple ID Generat
 
 ## Test Structure
 
-The test suite is organized into 5 main test files covering all major user journeys:
+The test suite is organized into 6 main test files covering all major user journeys:
 
 ### 1. Template Upload (`template-upload.spec.js`)
 - **Coverage**: 5 tests
@@ -65,6 +65,22 @@ The test suite is organized into 5 main test files covering all major user journ
   - Large batch ZIP downloads
   - Progress indication for large operations
   - Edit mode after generation
+
+### 6. Text Boldness Control (`text-boldness.spec.js`)
+- **Coverage**: 14 tests
+- **Features Tested**:
+  - Boldness slider visibility control
+  - Real-time value display updates
+  - Canvas preview updates with font weight changes
+  - Boldness persistence in downloaded files
+  - Batch generation with boldness applied
+  - Edit mode field overlay font weight
+  - Slider min/max boundaries (100-900)
+  - Step increments (100)
+  - Multiple field type support
+  - Styling and interaction behavior
+  - Session persistence of boldness settings
+  - Canvas rendering with correct font weight
 
 ## Test Utilities
 

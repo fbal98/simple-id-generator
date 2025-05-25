@@ -138,7 +138,8 @@ export const CONFIG = Object.freeze({
     GENERATION_COMPLETE: 'generation:complete',
     GENERATION_ERROR: 'generation:error',
     
-    STATE_CHANGED: 'state:changed'
+    STATE_CHANGED: 'state:changed',
+    FONT_WEIGHT_CHANGED: 'font:weight-changed'
   },
 
   // CSS Classes

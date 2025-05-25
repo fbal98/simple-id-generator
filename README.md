@@ -7,6 +7,7 @@ A simple web application to generate randomized ID cards based on a user-provide
 - Add draggable and resizable text fields (Name, Date of Birth, Issue Date, Expiry Date, Civil Number).
 - Add a photo field that fetches AI-generated faces via a local proxy.
 - Generate multiple ID cards with randomized data.
+- Adjust text boldness with real-time preview (font weight 100-900).
 - Preview the first generated ID and download individual IDs or all as a ZIP archive.
 
 ## Tech Stack
@@ -59,13 +60,14 @@ bunx playwright test tests/e2e/template-upload.spec.js
 
 ### Test Coverage
 
-The test suite includes 46 tests across 5 test files:
+The test suite includes 60 tests across 6 test files:
 
 - **Template Upload** (5 tests): Upload validation, error handling, template replacement
 - **Field Management** (12 tests): Adding all field types, positioning, resizing, edge switching
 - **ID Generation** (10 tests): Single/batch generation, progress tracking, API mocking
 - **Output Validation** (10 tests): Visual regression testing, screenshot comparison
 - **Download Functionality** (9 tests): Preview downloads, ZIP generation, file integrity
+- **Text Boldness Control** (14 tests): Slider functionality, real-time updates, persistence
 
 ### Visual Regression Testing
 
@@ -91,8 +93,13 @@ See `/tests/README.md` for detailed testing documentation.
      - **Bottom edge**: Text is centered with bottom padding
 4. In the **Generation** panel (right), set the number of IDs to generate.
 5. Click **Generate IDs**.
-6. Preview the first ID on the canvas. Click **Download Preview** to save it.
-7. If multiple IDs are generated, click **Download All (ZIP)** to download a ZIP archive of all IDs.
+6. **Adjust text boldness** (after generation):
+   - Use the **Font Weight** slider that appears after generating IDs
+   - Adjust from 100 (thin) to 900 (black) in increments of 100
+   - Changes apply instantly to the preview
+   - All downloaded IDs will use the selected font weight
+7. Preview the first ID on the canvas. Click **Download Preview** to save it.
+8. If multiple IDs are generated, click **Download All (ZIP)** to download a ZIP archive of all IDs.
    If the JSZip library fails to load, this button will be disabled.
 
 ## Project Structure
@@ -123,7 +130,8 @@ See `/tests/README.md` for detailed testing documentation.
     │   ├── field-management.spec.js
     │   ├── id-generation.spec.js
     │   ├── output-validation.spec.js
-    │   └── download.spec.js
+    │   ├── download.spec.js
+    │   └── text-boldness.spec.js
     ├── fixtures/                 # Test assets
     │   └── template_id.JPEG
     └── helpers/                  # Test utilities

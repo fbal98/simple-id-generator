@@ -110,6 +110,27 @@ class SimpleIDGeneratorApp {
       this._handleEditLayout();
     });
 
+    // Boldness control
+    const boldnessSlider = document.getElementById('boldnessSlider');
+    const boldnessValue = document.getElementById('boldnessValue');
+    if (boldnessSlider && boldnessValue) {
+      boldnessSlider.addEventListener('input', (e) => {
+        const weight = e.target.value;
+        boldnessValue.textContent = weight;
+        appState.setFontWeight(weight);
+        
+        // Re-render if we have generated IDs
+        if (appState.hasGeneratedContent && appState.generatedIds.length > 0) {
+          this._rerenderCurrentPreview();
+        }
+        
+        // Update field overlays in edit mode
+        if (appState.isInEditMode) {
+          fieldManager.updateFontWeight(weight);
+        }
+      });
+    }
+
     // App State events
     appState.addEventListener(getEventName('TEMPLATE_LOADED'), (e) => {
       this._onTemplateChanged(e.detail);
@@ -294,6 +315,9 @@ class SimpleIDGeneratorApp {
         this._updateFieldOverlaysWithData(lastData.text);
       }
       
+      // Apply current font weight to field overlays
+      fieldManager.updateFontWeight(appState.fontWeight);
+      
       // Show only template on canvas
       this._renderCanvas();
       
@@ -379,6 +403,68 @@ class SimpleIDGeneratorApp {
     }
   }
 
+  async _rerenderCurrentPreview() {
+    if (!appState.hasGeneratedContent || appState.generatedIds.length === 0) return;
+    
+    try {
+      const fontWeight = appState.fontWeight;
+      
+      // Get the proper scale factors
+      const displayCanvas = document.getElementById('idCanvas');
+      let scaleFactors = { scaleX: 1, scaleY: 1 };
+      
+      if (displayCanvas && appState.templateImage) {
+        const displayRect = displayCanvas.getBoundingClientRect();
+        scaleFactors = canvasRenderer.calculateScaleFactors(
+          { width: displayRect.width, height: displayRect.height },
+          { width: appState.templateImage.width, height: appState.templateImage.height }
+        );
+      }
+      
+      // Re-render all generated IDs with new font weight
+      for (let i = 0; i < appState.generatedIds.length; i++) {
+        const currentId = appState.generatedIds[i];
+        
+        // Re-render with new font weight using the template image dimensions
+        const { canvas: offscreenCanvas, ctx: offscreenCtx } = canvasRenderer.createOffscreenCanvas(
+          appState.templateImage.width,
+          appState.templateImage.height
+        );
+        
+        // Render the ID with the new font weight and proper scale factors
+        canvasRenderer.renderGeneratedId(
+          offscreenCtx,
+          appState.templateImage,
+          appState.fields,
+          currentId.instanceData.text,
+          currentId.instanceData.photos,
+          scaleFactors.scaleX,
+          scaleFactors.scaleY,
+          fontWeight
+        );
+        
+        // Convert to data URL
+        const dataUrl = await canvasRenderer.canvasToDataURL(offscreenCanvas);
+        
+        // Update the stored data URL so downloads reflect the change
+        currentId.dataUrl = dataUrl;
+        
+        // If this is the first ID, display it
+        if (i === 0) {
+          const img = new Image();
+          img.onload = () => {
+            canvasRenderer.clearCanvas(this.canvasContext);
+            this.canvasContext.drawImage(img, 0, 0, displayCanvas.width, displayCanvas.height);
+          };
+          img.src = dataUrl;
+        }
+      }
+      
+    } catch (error) {
+      console.error('Error re-rendering preview:', error);
+    }
+  }
+
   _updateFieldOverlaysWithData(textData) {
     for (const [fieldId, text] of Object.entries(textData)) {
       fieldManager.updateFieldText(fieldId, text);
@@ -447,6 +533,15 @@ class SimpleIDGeneratorApp {
       isInEditMode: false,
       generatedIdCount: idCount
     });
+    
+    // Show/hide boldness control based on content
+    const boldnessControl = document.getElementById('boldnessControl');
+    const boldnessHr = document.getElementById('boldnessHr');
+    if (boldnessControl && boldnessHr) {
+      const display = hasContent ? 'block' : 'none';
+      boldnessControl.style.display = display;
+      boldnessHr.style.display = display;
+    }
     
     if (ids.length > 0) {
       uiController.showSuccess(`Generated ${ids.length} IDs successfully`);

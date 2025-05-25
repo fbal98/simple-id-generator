@@ -14,6 +14,7 @@ export class AppState extends EventTarget {
   _isContentGenerated = false;
   _fieldCounter = 0;
   _generationInProgress = false;
+  _fontWeight = 600; // Default font weight
 
   constructor() {
     super();
@@ -234,6 +235,7 @@ export class AppState extends EventTarget {
     this._generatedIds = [];
     this._isContentGenerated = false;
     this._lastGeneratedData = null;
+    this._fontWeight = 600; // Reset font weight when clearing generated IDs
     
     if (hadContent) {
       this._emitChange(getEventName('GENERATION_COMPLETE'), {
@@ -305,6 +307,28 @@ export class AppState extends EventTarget {
     this._lastGeneratedData = data ? { ...data } : null;
   }
 
+  // Font Weight Management
+  get fontWeight() {
+    return this._fontWeight;
+  }
+
+  setFontWeight(weight) {
+    const numWeight = parseInt(weight, 10);
+    if (isNaN(numWeight) || numWeight < 100 || numWeight > 900 || numWeight % 100 !== 0) {
+      throw new Error('Font weight must be a number between 100-900 in increments of 100');
+    }
+
+    const previousWeight = this._fontWeight;
+    this._fontWeight = numWeight;
+
+    if (previousWeight !== numWeight) {
+      this._emitChange(getEventName('FONT_WEIGHT_CHANGED'), {
+        fontWeight: numWeight,
+        previousWeight
+      });
+    }
+  }
+
   // State Validation and Serialization
   isValid() {
     return {
@@ -341,6 +365,7 @@ export class AppState extends EventTarget {
     this._isContentGenerated = false;
     this._fieldCounter = 0;
     this._generationInProgress = false;
+    this._fontWeight = 600; // Reset to default
 
     this._emitChange(getEventName('STATE_CHANGED'), {
       stateType: 'reset',

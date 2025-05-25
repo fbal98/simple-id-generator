@@ -163,6 +163,18 @@ export class FieldManager extends EventTarget {
   }
 
   /**
+   * Update font weight for all text fields
+   * @param {number} fontWeight - Font weight value (100-900)
+   */
+  updateFontWeight(fontWeight) {
+    for (const fieldElement of this._fields.values()) {
+      if (fieldElement.dataset.type !== CONFIG.FIELDS.TYPES.PHOTO) {
+        fieldElement.style.fontWeight = fontWeight;
+      }
+    }
+  }
+
+  /**
    * Set focused field
    * @param {HTMLElement|null} fieldElement - Field to focus or null to clear
    */
