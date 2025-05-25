@@ -2,6 +2,7 @@
   "name": "simple-id-generator",
   "version": "1.0.0",
   "description": "A simple ID generator tool with comprehensive E2E testing",
+  "type": "module",
   "main": "index.html",
   "scripts": {
     "start": "bun server.js",
