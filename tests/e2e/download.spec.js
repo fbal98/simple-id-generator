@@ -1,6 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { TestUtils } from '../helpers/test-utils.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test.describe('Download & Post-Generation Flows', () => {
   let testUtils;
@@ -84,7 +88,6 @@ test.describe('Download & Post-Generation Flows', () => {
     const path = await download.path();
     
     // Verify file exists and has content
-    const fs = require('fs');
     expect(fs.existsSync(path)).toBeTruthy();
     
     const stats = fs.statSync(path);

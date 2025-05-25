@@ -1,6 +1,24 @@
 // Configuration module for Simple ID Generator
 // Contains all magic numbers, hardcoded strings, and application constants
 
+// Automatically detect deployment environment and use appropriate endpoint
+function getDeploymentAwareFaceEndpoint() {
+  const hostname = window.location.hostname;
+  
+  // Check if running on Netlify
+  if (hostname.includes('.netlify.app') || hostname.includes('.netlify.com')) {
+    return '/.netlify/functions/face';
+  }
+  
+  // Check if running on Vercel
+  if (hostname.includes('.vercel.app') || hostname.includes('.vercel.com')) {
+    return '/api/face';
+  }
+  
+  // Default for local development
+  return '/api/face';
+}
+
 export const CONFIG = Object.freeze({
   // Canvas Configuration
   CANVAS: {
@@ -37,7 +55,7 @@ export const CONFIG = Object.freeze({
 
   // API Configuration
   API: {
-    FACE_ENDPOINT: '/api/face',
+    FACE_ENDPOINT: getDeploymentAwareFaceEndpoint(),
     REQUEST_TIMEOUT: 10000,
     RETRY_ATTEMPTS: 3,
     RETRY_DELAY: 1000

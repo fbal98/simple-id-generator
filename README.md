@@ -172,6 +172,17 @@ See `/tests/README.md` for detailed testing documentation.
 - **API Proxy**: The `/api/face` endpoint in `server.js` proxies to https://thispersondoesnotexist.com/. Customize as needed.
 - **Test Port**: Tests run on port 3001 to avoid conflicts with development server.
 
+## Deployment
+
+This application can be deployed for free on Netlify or Vercel. Both platforms support the required serverless functions for the AI face proxy.
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed deployment instructions, including:
+- Step-by-step setup for Netlify and Vercel
+- Serverless function configuration
+- Environment detection and automatic endpoint routing
+- One-click deploy buttons
+- Troubleshooting common issues
+
 ## Design System
 
 The application features a modern, professional design inspired by Vodafone's visual language:

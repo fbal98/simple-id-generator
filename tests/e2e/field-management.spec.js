@@ -1,6 +1,9 @@
 import { test, expect } from '@playwright/test';
 import { TestUtils, addCustomMatchers } from '../helpers/test-utils.js';
 import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Add custom matchers for positioning tests
 addCustomMatchers();

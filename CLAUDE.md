@@ -201,6 +201,25 @@ bunx playwright test --update-snapshots
 - Download tests use `page.waitForEvent('download')` for proper download handling
 - Resize functionality uses mouse events to drag the `.resize-handle` element
 
+### Screenshot Reference Update Guidelines
+
+When to update screenshot references for testing:
+
+- Major UI changes that affect layout or visual design
+- Changes to field positioning or sizing logic
+- Updates to font rendering or boldness implementation
+- Modifications to canvas drawing methods
+- Changes in text or field overlay styles
+- New design system color palette or typography adjustments
+- Significant updates to component rendering
+
+Update process:
+- Ensure the new UI state is the desired, final state
+- ask the user when you are not sure (to perform human sanity check)
+- Run tests with `bunx playwright test --update-snapshots`
+- Manually verify updated screenshots match the intended design
+- Commit updated screenshot baselines with a clear explanation of changes
+
 ## Development Guidelines
 
 ### Code Style
