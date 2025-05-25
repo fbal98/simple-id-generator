@@ -136,3 +136,6 @@ bunx playwright test --update-snapshots
 - Visual regression tests compare screenshots against baselines
 - Field selectors use pattern `[id^="field-{type}"]` where type is: name, dob, issueDate, expiry, civilNo, photo
 - Generated IDs are displayed on the main canvas (#idCanvas), not as separate elements
+- Field positioning and dimensions are relative to the #fieldLayer container
+- Download tests use `page.waitForEvent('download')` for proper download handling
+- Resize functionality uses mouse events to drag the `.resize-handle` element

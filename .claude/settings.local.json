@@ -31,7 +31,9 @@
       "mcp__context7__get-library-docs",
       "Bash(bun add:*)",
       "Bash(cp:*)",
-      "Bash(bun playwright:*)"
+      "Bash(bun playwright:*)",
+      "Bash(touch:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }
