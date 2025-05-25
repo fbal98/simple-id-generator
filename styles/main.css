@@ -264,7 +264,7 @@ h3, h4 {
 }
 
 h3 {
-    font-size: 22px;
+    font-size: 18px;
     padding-bottom: var(--spacing-md);
     margin-bottom: 0;
     border-bottom: 1px solid var(--border-color-light);
@@ -272,14 +272,16 @@ h3 {
     align-items: center;
     gap: var(--spacing-sm);
     position: relative;
+    color: var(--text-color-primary);
+    letter-spacing: -0.02em;
 }
 
 h3::before {
     content: '';
-    width: 4px;
-    height: 24px;
+    width: 3px;
+    height: 20px;
     background: var(--primary-gradient);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-full);
 }
 
 h3::after {
@@ -287,10 +289,10 @@ h3::after {
     position: absolute;
     bottom: -1px;
     left: 0;
-    width: 60px;
-    height: 2px;
-    background: var(--primary-gradient);
-    border-radius: var(--radius-full);
+    width: 40px;
+    height: 1px;
+    background: var(--primary-color);
+    opacity: 0.8;
 }
 
 h4 {
@@ -308,6 +310,15 @@ h4 {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
+}
+
+/* Field button groups */
+#leftPanel h4 + .form-group {
+    margin-top: var(--spacing-sm);
+}
+
+#leftPanel .form-group:has(button) + .form-group:has(button) {
+    margin-top: 6px;
 }
 
 label {
@@ -483,65 +494,115 @@ button.btn-secondary:hover:not(:disabled),
     box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 214, 143, 0.3);
 }
 
-/* Add field buttons special styling */
+/* Add field buttons - Modern minimal design */
 #leftPanel .form-group button {
-    font-size: 14px;
-    padding: 12px 20px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
-    color: var(--text-color-primary);
-    border: 1px solid var(--border-color-light);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    font-size: 13px;
+    padding: 10px 18px;
+    background: rgba(250, 250, 252, 0.8);
+    color: var(--text-color-secondary);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: var(--radius-sm);
+    box-shadow: none;
     font-weight: 500;
+    letter-spacing: 0.01em;
     text-transform: none;
-    backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
+    text-align: left;
+    transition: all var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
 }
 
-#leftPanel .form-group button::after {
+/* Subtle gradient background */
+#leftPanel .form-group button::before {
     content: '';
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, transparent 0%, rgba(255, 255, 255, 0.5) 100%);
     opacity: 0;
-    transition: opacity var(--transition-base);
+    z-index: -1;
+    transition: all var(--transition-base);
+}
+
+/* Left accent indicator */
+#leftPanel .form-group button::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--text-color-muted);
+    opacity: 0;
+    transition: all var(--transition-base);
 }
 
 #leftPanel .form-group button:hover:not(:disabled) {
-    border-color: var(--primary-color-light);
-    background: linear-gradient(135deg, rgba(230, 0, 0, 0.05) 0%, rgba(230, 0, 0, 0.08) 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(230, 0, 0, 0.15);
+    color: var(--text-color-primary);
+    background: rgba(255, 255, 255, 0.8);
+    border-color: var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
 }
 
+#leftPanel .form-group button:hover:not(:disabled)::before {
+    opacity: 1;
+}
+
+#leftPanel .form-group button:hover:not(:disabled)::after {
+    opacity: 1;
+    width: 3px;
+}
+
+/* Specific button accents - subtle colors */
+#addNameField:hover::after { background: var(--primary-color); }
+#addDOBField:hover::after { background: var(--info-color); }
+#addIssueDateField:hover::after { background: var(--success-color); }
+#addExpiryDateField:hover::after { background: var(--warning-color); }
+#addCivilNoField:hover::after { background: var(--secondary-color); }
+#addPhotoField:hover::after { background: var(--accent-purple); }
+
+/* Add subtle text labels */
 #leftPanel .form-group button span {
     position: relative;
     z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-/* Add icons to buttons */
-#addNameField::before { content: '👤 '; }
-#addDobField::before { content: '📅 '; }
-#addIssueDateField::before { content: '📆 '; }
-#addExpiryDateField::before { content: '⏰ '; }
-#addCivilNoField::before { content: '🆔 '; }
-#addPhotoField::before { content: '📸 '; }
+/* Clean design without indicators */
+#leftPanel .form-group button span::before {
+    display: none;
+}
 
 /* Special styling for photo button */
 #addPhotoField {
-    background: linear-gradient(135deg, rgba(156, 42, 160, 0.05) 0%, rgba(156, 42, 160, 0.08) 100%);
-    border-color: rgba(156, 42, 160, 0.2);
-    color: var(--accent-purple);
+    margin-top: var(--spacing-sm);
+    position: relative;
 }
 
 #addPhotoField:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgba(156, 42, 160, 0.1) 0%, rgba(156, 42, 160, 0.15) 100%);
-    border-color: var(--accent-purple);
     color: var(--accent-purple);
-    box-shadow: 0 4px 12px rgba(156, 42, 160, 0.2);
+}
+
+#addPhotoField:hover:not(:disabled)::after {
+    background: var(--accent-purple);
+}
+
+/* Focus states for accessibility */
+#leftPanel .form-group button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Active state */
+#leftPanel .form-group button:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
 /* === Separator === */
