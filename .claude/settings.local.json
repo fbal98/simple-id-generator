@@ -34,7 +34,8 @@
       "Bash(bun playwright:*)",
       "Bash(touch:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
