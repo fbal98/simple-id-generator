@@ -1,14 +1,25 @@
 # Simple ID Generator
 
-A simple web application to generate randomized ID cards based on a user-provided template.
+A modern, enterprise-grade web application for generating randomized ID cards based on custom templates. Features a sophisticated UI inspired by Vodafone's design language with glassmorphism effects, modern gradients, and professional aesthetics.
 
 ## Features
-- Upload a custom ID template image (PNG, JPEG, etc.).
-- Add draggable and resizable text fields (Name, Date of Birth, Issue Date, Expiry Date, Civil Number).
-- Add a photo field that fetches AI-generated faces via a local proxy.
-- Generate multiple ID cards with randomized data.
-- Adjust text boldness with real-time preview (font weight 100-900).
-- Preview the first generated ID and download individual IDs or all as a ZIP archive.
+
+### Core Functionality
+- **Template Upload**: Support for custom ID template images (PNG, JPEG, etc.)
+- **Field Management**: Add draggable and resizable fields
+  - Text fields: Name, Date of Birth, Issue Date, Expiry Date, Civil Number
+  - Photo field: Automatically fetches AI-generated faces
+- **Smart Field Positioning**: Label edge system for precise text alignment (left, right, top, bottom)
+- **Batch Generation**: Generate multiple ID cards with randomized, culturally appropriate data
+- **Real-time Customization**: Adjust text boldness with live preview (font weight 100-900)
+- **Export Options**: Download individual IDs or batch export as ZIP archive
+
+### Design & User Experience
+- **Modern UI**: Vodafone-inspired design with contemporary aesthetics
+- **Glassmorphism Effects**: Translucent panels with backdrop blur
+- **Smooth Animations**: Professional transitions and hover states
+- **Responsive Layout**: Adaptive design for various screen sizes
+- **Accessibility**: Keyboard navigation and focus indicators
 
 ## Tech Stack
 - [Bun](https://bun.sh/) for server and static file serving.
@@ -81,26 +92,44 @@ See `/tests/README.md` for detailed testing documentation.
 
 
 ## Usage
-1. In the **Controls** panel (left), upload your ID template image.
-2. Click the buttons to add fields: Name, Date of Birth, Issue Date, Expiry Date, Civil Number, or Photo.
-3. **Position and configure fields:**
-   - **Drag** fields to reposition them on the template
-   - **Resize** fields using the resize handle (bottom-right corner when focused)
-   - **Set label edge** by clicking on edge indicators (left, right, top, bottom) when field is focused:
-     - **Left edge**: Text grows rightward (default)
-     - **Right edge**: Text grows leftward  
-     - **Top edge**: Text is centered with top padding
-     - **Bottom edge**: Text is centered with bottom padding
-4. In the **Generation** panel (right), set the number of IDs to generate.
-5. Click **Generate IDs**.
-6. **Adjust text boldness** (after generation):
-   - Use the **Font Weight** slider that appears after generating IDs
-   - Adjust from 100 (thin) to 900 (black) in increments of 100
-   - Changes apply instantly to the preview
-   - All downloaded IDs will use the selected font weight
-7. Preview the first ID on the canvas. Click **Download Preview** to save it.
-8. If multiple IDs are generated, click **Download All (ZIP)** to download a ZIP archive of all IDs.
-   If the JSZip library fails to load, this button will be disabled.
+
+### 1. Template Setup
+- Click **Choose File** in the Controls panel to upload your ID template image
+- The template will appear in the central canvas area
+
+### 2. Adding Fields
+- Use the field buttons to add different types of data fields:
+  - **Name Field**: For full names
+  - **Date of Birth**: For birth dates
+  - **Issue Date**: For ID issue dates
+  - **Expiry Date**: For ID expiration dates
+  - **Civil Number**: For ID/civil registration numbers
+  - **Photo Area**: For portrait photos (AI-generated)
+
+### 3. Field Configuration
+- **Position**: Drag fields to place them on the template
+- **Resize**: Use the resize handle (visible when field is selected)
+- **Label Edge**: Click field edges to change text alignment:
+  - Left edge: Text flows rightward (default)
+  - Right edge: Text flows leftward
+  - Top edge: Centered text with top padding
+  - Bottom edge: Centered text with bottom padding
+
+### 4. ID Generation
+- Set the **Number of IDs** to generate (default: 1)
+- Click **Generate IDs** to create randomized ID cards
+- Watch the progress bar for batch generation
+
+### 5. Customization (Post-Generation)
+- **Text Boldness**: Use the Font Weight slider (100-900)
+  - Real-time preview updates
+  - Applies to all generated IDs
+- **Edit Layout**: Return to field editing mode
+
+### 6. Export Options
+- **Download Preview**: Save the currently displayed ID
+- **Download All (ZIP)**: Export all generated IDs as a ZIP archive
+  - Files are named sequentially (id_1.png, id_2.png, etc.)
 
 ## Project Structure
 ```
@@ -142,6 +171,18 @@ See `/tests/README.md` for detailed testing documentation.
 - **PORT**: Default is 3000. Can be overridden with `PORT` environment variable.
 - **API Proxy**: The `/api/face` endpoint in `server.js` proxies to https://thispersondoesnotexist.com/. Customize as needed.
 - **Test Port**: Tests run on port 3001 to avoid conflicts with development server.
+
+## Design System
+
+The application features a modern, professional design inspired by Vodafone's visual language:
+
+- **Color Scheme**: Vodafone red (#E60000) as primary accent with modern secondary colors
+- **Typography**: Clean, hierarchical text system with variable font weights
+- **Visual Effects**: Glassmorphism, subtle animations, and modern shadows
+- **Layout**: Three-panel responsive design with intuitive information architecture
+- **Accessibility**: Keyboard navigation, focus indicators, and ARIA labels
+
+For detailed design documentation, see the Design System section in `CLAUDE.md`.
 
 ## Contributing
 Contributions are welcome! Please fork the repository, create a branch for your feature or fix, and submit a pull request.

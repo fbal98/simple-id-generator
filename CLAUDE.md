@@ -131,6 +131,41 @@ The text boldness control provides real-time font weight adjustment:
 7. **Download Consistency**: Updated data URLs ensure downloads reflect current font weight
 8. **Session Persistence**: Font weight persists during session but resets to 600 when clearing generated IDs
 
+## Design System
+
+### Modern UI Design (Vodafone-Inspired)
+
+The application features a sophisticated design system inspired by Vodafone's brand guidelines but modernized for contemporary web applications:
+
+1. **Color Palette**
+   - Primary: Vodafone Red (#E60000) with modern variations
+   - Secondary: Deep navy (#1A1F36) for contrast
+   - Accent colors: Purple (#9C2AA0), Cyan (#00D4FF), Success Green (#00D68F)
+   - Neutral grays with subtle warmth for better readability
+
+2. **Typography**
+   - Clean sans-serif stack prioritizing system fonts
+   - Hierarchical sizing: 18px for headings, 13-16px for body text
+   - Font weights: 500-700 for optimal readability
+
+3. **Visual Effects**
+   - **Glassmorphism**: Translucent panels with backdrop blur
+   - **Subtle animations**: Smooth transitions and micro-interactions
+   - **Modern shadows**: Multi-layered for depth without heaviness
+   - **Gradient accents**: Used sparingly for visual interest
+
+4. **Component Design**
+   - **Buttons**: Gradient backgrounds with hover elevation
+   - **Inputs**: Semi-transparent with focus glow effects
+   - **Field overlays**: Glassmorphic design with color-coded accents
+   - **Progress indicators**: Animated gradient fills
+
+5. **Layout Principles**
+   - Three-panel layout with visual hierarchy
+   - Generous spacing following 8px grid system
+   - Subtle background patterns for depth
+   - Professional, enterprise-appropriate aesthetics
+
 ## Testing
 
 ### Running Tests
@@ -165,3 +200,29 @@ bunx playwright test --update-snapshots
 - Field positioning and dimensions are relative to the #fieldLayer container
 - Download tests use `page.waitForEvent('download')` for proper download handling
 - Resize functionality uses mouse events to drag the `.resize-handle` element
+
+## Development Guidelines
+
+### Code Style
+- Use ES6+ features (modules, arrow functions, destructuring)
+- Maintain single responsibility principle for modules
+- Add JSDoc comments for public functions
+- Keep functions pure where possible
+
+### CSS Architecture
+- Use CSS custom properties for theming
+- Follow BEM-like naming for complex components
+- Organize styles by component/section
+- Maintain responsive design principles
+
+### Testing Best Practices
+- Write descriptive test names
+- Use Page Object pattern for complex interactions
+- Mock external dependencies (API calls)
+- Maintain visual regression baselines
+
+### Performance Considerations
+- Lazy load heavy dependencies (JSZip)
+- Use offscreen canvas for batch rendering
+- Optimize image processing with appropriate formats
+- Minimize reflows during drag operations
